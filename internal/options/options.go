@@ -83,10 +83,10 @@ func Resolve(cfg *config.File, flags *pflag.FlagSet, env map[string]string) Opti
 			profileName = v
 		}
 	}
-	if profileName == "" && cfg.DefaultProfile != "" {
-		profileName = cfg.DefaultProfile
+	if profileName == "" && cfg.DefaultContext != "" {
+		profileName = cfg.DefaultContext
 	}
-	if p, ok := cfg.Profiles[profileName]; ok {
+	if p, ok := cfg.Contexts[profileName]; ok {
 		o.Profile = profileName
 		o.Addr = p.Addr
 		o.Insecure = p.Insecure

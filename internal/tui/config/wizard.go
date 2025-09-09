@@ -18,12 +18,15 @@ type model struct {
 	err        error
 
 	// inputs
-	profile textinput.Model
+	name    textinput.Model
 	addr    textinput.Model
 	token   textinput.Model
 	timeout textinput.Model
 
-	insecure bool
+	// selections
+	insecure   bool
+	apiChoices []string
+	apiIndex   int
 
 	// où on va écrire
 	configPath string
@@ -32,6 +35,7 @@ type model struct {
 }
 
 type Result struct {
+	Name       string
 	Addr       string
 	Insecure   bool
 	CACert     string
@@ -53,21 +57,25 @@ func initialModel() (model, error) {
 	m.configPath = p
 
 	// inputs
-	m.profile = textinput.New()
-	m.profile.Placeholder = "Profile name (ex: prod)"
-	m.profile.CharLimit = 64
-	m.profile.Focus()
+	m.name = textinput.New()
+	m.name.Placeholder = "Context name (ex: prod)"
+	m.name.CharLimit = 64
+	m.name.Focus()
 
 	m.addr = textinput.New()
 	m.addr.Placeholder = "gRPC address (host:port), ex: chipstark.example.com:443"
 
 	m.token = textinput.New()
-	m.token.Placeholder = "Token API (bearer)"
+	m.token.Placeholder = "API token (Bearer)"
 	m.token.EchoMode = textinput.EchoPassword
 
 	m.timeout = textinput.New()
 	m.timeout.Placeholder = "Timeout (ex: 10s)"
 	m.timeout.SetValue("10s")
+
+	// API choices
+	m.apiChoices = []string{"v4", "v3", "auto"} // adapte l’ordre si tu veux
+	m.apiIndex = 0                              // défaut: v4
 
 	return m, nil
 }
@@ -79,37 +87,47 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-
-		// Quit partout
 		case "ctrl+c", "esc":
 			return m, tea.Quit
 
-		// Basculer secure/insecure à l’étape 2
+		// Step 3 (TLS): bascule avec s/i
 		case "s":
-			if m.step == 2 {
+			if m.step == 3 {
 				m.insecure = false
 			}
 		case "i":
-			if m.step == 2 {
+			if m.step == 3 {
 				m.insecure = true
 			}
 
+		// Step 2 (API): navigation dans les choix
+		case "left", "right", "up", "down", "tab":
+			if m.step == 2 {
+				if msg.String() == "left" || msg.String() == "up" {
+					m.apiIndex = (m.apiIndex - 1 + len(m.apiChoices)) % len(m.apiChoices)
+				} else {
+					m.apiIndex = (m.apiIndex + 1) % len(m.apiChoices)
+				}
+				return m, nil
+			}
+
 		case "enter":
-			// validation & passage à l’étape suivante
 			if err := m.validateCurrent(); err != nil {
 				m.err = err
 				return m, nil
 			}
-			if m.step < 5 {
+			// progression
+			if m.step < 6 {
 				m.step++
-				// focus champ suivant
 				switch m.step {
 				case 1:
 					m.addr.Focus()
-					m.profile.Blur()
+					m.name.Blur()
 				case 3:
-					m.token.Focus()
+					// TLS step, pas d’input
 				case 4:
+					m.token.Focus()
+				case 5:
 					m.timeout.Focus()
 				}
 				return m, nil
@@ -123,17 +141,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m.step {
 	case 0:
 		var cmd tea.Cmd
-		m.profile, cmd = m.profile.Update(msg)
+		m.name, cmd = m.name.Update(msg)
 		return m, cmd
 	case 1:
 		var cmd tea.Cmd
 		m.addr, cmd = m.addr.Update(msg)
 		return m, cmd
-	case 3:
+	case 4:
 		var cmd tea.Cmd
 		m.token, cmd = m.token.Update(msg)
 		return m, cmd
-	case 4:
+	case 5:
 		var cmd tea.Cmd
 		m.timeout, cmd = m.timeout.Update(msg)
 		return m, cmd
@@ -151,53 +169,70 @@ var (
 
 func (m model) View() string {
 	if m.done {
-		return confirmStyle.Render("✔ Config enregistrée !") + "\n"
+		return confirmStyle.Render(" ") + "\n"
 	}
 	s := ""
 
 	switch m.step {
 	case 0:
-		s += titleStyle.Render("Step 1/6 — Profile name") + "\n\n"
-		s += m.profile.View() + "\n"
-		s += helpStyle.Render("\nEnter for validation • ESC for quit") + "\n"
+		s += titleStyle.Render("Step 1/7 — Context name") + "\n\n"
+		s += m.name.View() + "\n"
+		s += helpStyle.Render("\nEnter to validate • ESC to quit") + "\n"
 
 	case 1:
-		s += titleStyle.Render("Step 2/6 — gRPC address") + "\n\n"
+		s += titleStyle.Render("Step 2/7 — gRPC address") + "\n\n"
 		s += m.addr.View() + "\n"
-		s += helpStyle.Render("\nEx: chipstark.example.com:443 • enter for validation") + "\n"
+		s += helpStyle.Render("\nEx: chipstark.example.com:443 • Enter to validate") + "\n"
 
 	case 2:
-		s += titleStyle.Render("Step 3/6 — TLS") + "\n\n"
+		s += titleStyle.Render("Step 3/7 — API version") + "\n\n"
+		// simple rendu “boutons” avec highlight
+		for i, v := range m.apiChoices {
+			if i == m.apiIndex {
+				s += lipgloss.NewStyle().Bold(true).Underline(true).Render("[ " + v + " ]")
+			} else {
+				s += "[ " + v + " ]"
+			}
+			if i < len(m.apiChoices)-1 {
+				s += "  "
+			}
+		}
+		s += "\n"
+		s += helpStyle.Render("\nUse ←/→ or ↑/↓ (or Tab) to select • Enter to validate") + "\n"
+
+	case 3:
+		s += titleStyle.Render("Step 4/7 — TLS") + "\n\n"
 		if m.insecure {
 			s += "Mode : [i] insecure (TLS disabled)\n"
 		} else {
 			s += "Mode : [s] secure (TLS enabled)\n"
 		}
-		s += helpStyle.Render("\nAppuie sur 's' pour secure ou 'i' pour insecure, puis Entrée") + "\n"
-
-	case 3:
-		s += titleStyle.Render("Step 4/6 — Token API (Bearer)") + "\n\n"
-		s += m.token.View() + "\n"
-		s += helpStyle.Render("\nThe token can be left empty for test.") + "\n"
+		s += helpStyle.Render("\nPress 's' for secure or 'i' for insecure, then Enter") + "\n"
 
 	case 4:
-		s += titleStyle.Render("Step 5/6 — Timeout") + "\n\n"
-		s += m.timeout.View() + "\n"
-		s += helpStyle.Render("\nFormat: 5s, 10s, 1m… • Enter for validation") + "\n"
+		s += titleStyle.Render("Step 5/7 — API token (Bearer)") + "\n\n"
+		s += m.token.View() + "\n"
+		s += helpStyle.Render("\nToken can be left empty for tests • Enter to validate") + "\n"
 
 	case 5:
-		s += titleStyle.Render("Step 6/6 — Confirmation") + "\n\n"
-		s += fmt.Sprintf("Path: %s\n", m.configPath)
-		s += fmt.Sprintf("Profil: %s\n", m.profile.Value())
-		s += fmt.Sprintf("Addr  : %s\n", m.addr.Value())
-		s += fmt.Sprintf("TLS   : %v (insecure=%v)\n", !m.insecure, m.insecure)
+		s += titleStyle.Render("Step 6/7 — Timeout") + "\n\n"
+		s += m.timeout.View() + "\n"
+		s += helpStyle.Render("\nFormat: 5s, 10s, 1m… • Enter to validate") + "\n"
+
+	case 6:
+		s += titleStyle.Render("Step 7/7 — Confirmation") + "\n\n"
+		s += fmt.Sprintf("Path     : %s\n", m.configPath)
+		s += fmt.Sprintf("Context  : %s\n", m.name.Value())
+		s += fmt.Sprintf("Addr     : %s\n", m.addr.Value())
+		s += fmt.Sprintf("API      : %s\n", m.apiChoices[m.apiIndex])
+		s += fmt.Sprintf("TLS      : %v (insecure=%v)\n", !m.insecure, m.insecure)
 		if m.token.Value() != "" {
-			s += "Token : ********\n"
+			s += "Token    : ********\n"
 		} else {
-			s += "Token : (vide)\n"
+			s += "Token    : (empty)\n"
 		}
-		s += fmt.Sprintf("Timeout: %s\n\n", m.timeout.Value())
-		s += confirmStyle.Render("Enter for confirm - ESC for cancel") + "\n"
+		s += fmt.Sprintf("Timeout  : %s\n\n", m.timeout.Value())
+		s += confirmStyle.Render("Enter to confirm • ESC to cancel") + "\n"
 	}
 
 	if m.err != nil {
@@ -210,22 +245,23 @@ func (m model) View() string {
 func (m *model) validateCurrent() error {
 	switch m.step {
 	case 0:
-		if v := m.profile.Value(); v == "" {
-			return errors.New("le nom de profil est requis")
+		if v := m.name.Value(); v == "" {
+			return errors.New("context name is required")
 		}
 	case 1:
 		if v := m.addr.Value(); v == "" {
-			return errors.New("l'adresse gRPC est requise (host:port)")
+			return errors.New("gRPC address is required (host:port)")
 		}
-	case 4:
+	case 2:
+		// rien de spécial: la sélection est toujours valide
+	case 5:
 		if _, err := time.ParseDuration(m.timeout.Value()); err != nil {
-			return fmt.Errorf("timeout invalide: %v", err)
+			return fmt.Errorf("invalid timeout: %v", err)
 		}
 	}
 	return nil
 }
 
-// ---- API externes
 func Run() (*Result, error) {
 	m, err := initialModel()
 	if err != nil {
@@ -240,12 +276,13 @@ func Run() (*Result, error) {
 		return nil, errors.New("annulé")
 	}
 	return &Result{
+		Name:       md.name.Value(),
 		Addr:       md.addr.Value(),
 		Insecure:   md.insecure,
 		CACert:     "",
 		ServerName: md.addr.Value(),
 		Token:      md.token.Value(),
 		Timeout:    md.timeout.Value(),
-		ApiVersion: "v4",
+		ApiVersion: md.apiChoices[md.apiIndex], // <-- pris du sélecteur
 	}, nil
 }

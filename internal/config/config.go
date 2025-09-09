@@ -1,7 +1,6 @@
 package config
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 
@@ -14,7 +13,7 @@ type MTls struct {
 	ClientKey  string `yaml:"clientKey"`
 }
 
-type Profile struct {
+type Context struct {
 	Addr       string `yaml:"addr"`
 	Insecure   bool   `yaml:"insecure"`
 	CACert     string `yaml:"caCert"`
@@ -27,8 +26,8 @@ type Profile struct {
 
 type File struct {
 	Version        int                `yaml:"version"`
-	DefaultProfile string             `yaml:"default_profile"`
-	Profiles       map[string]Profile `yaml:"profiles"`
+	DefaultContext string             `yaml:"defaultContext"`
+	Contexts       map[string]Context `yaml:"contexts"`
 }
 
 func Load() (*File, string, error) {
@@ -38,9 +37,9 @@ func Load() (*File, string, error) {
 	}
 
 	b, err := os.ReadFile(p)
-	if errors.Is(err, os.ErrNotExist) {
-		return &File{Version: 1, Profiles: map[string]Profile{}}, p, nil
-	}
+	/*if errors.Is(err, os.ErrNotExist) {
+		return &File{Version: 1, Contexts: map[string]Context{}}, p, nil
+	}*/
 	if err != nil {
 		return nil, "", err
 	}
@@ -49,8 +48,8 @@ func Load() (*File, string, error) {
 	if err := yaml.Unmarshal(b, &f); err != nil {
 		return nil, "", err
 	}
-	if f.Profiles == nil {
-		f.Profiles = map[string]Profile{}
+	if f.Contexts == nil {
+		f.Contexts = map[string]Context{}
 	}
 	return &f, p, nil
 }

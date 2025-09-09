@@ -12,14 +12,14 @@ type configService struct{}
 
 func New() configsvc.Service { return &configService{} }
 
-func (s *configService) Get(ctx context.Context) (config.File, error) {
+func (s *configService) Get(ctx context.Context) (*config.File, error) {
 	f, _, err := config.Load()
-	return *f, err
+	return f, err
 }
 
 func (s *configService) Init(ctx context.Context, f config.File) (config.File, error) {
-	if f.Profiles == nil {
-		f.Profiles = map[string]config.Profile{}
+	if f.Contexts == nil {
+		f.Contexts = map[string]config.Context{}
 	}
 	if err := config.Save(&f); err != nil {
 		return f, err
@@ -27,39 +27,39 @@ func (s *configService) Init(ctx context.Context, f config.File) (config.File, e
 	return f, nil
 }
 
-func (s *configService) ListProfiles(ctx context.Context) (map[string]config.Profile, error) {
+func (s *configService) ListProfiles(ctx context.Context) (map[string]config.Context, error) {
 	f, _, err := config.Load()
 	if err != nil {
 		return nil, err
 	}
 
-	return f.Profiles, nil
+	return f.Contexts, nil
 }
 
-func (s *configService) CreateProfile(ctx context.Context, name string, p config.Profile) (config.File, error) {
+func (s *configService) CreateProfile(ctx context.Context, name string, p config.Context) (config.File, error) {
 	f, _, err := config.Load()
 	if err != nil {
 		return config.File{}, err
 	}
-	if f.Profiles == nil {
-		f.Profiles = map[string]config.Profile{}
+	if f.Contexts == nil {
+		f.Contexts = map[string]config.Context{}
 	}
-	f.Profiles[name] = p
-	if f.DefaultProfile == "" {
-		f.DefaultProfile = name
+	f.Contexts[name] = p
+	if f.DefaultContext == "" {
+		f.DefaultContext = name
 	}
 	return *f, config.Save(f)
 }
 
-func (s *configService) UpdateProfile(ctx context.Context, name string, p config.Profile) (config.File, error) {
+func (s *configService) UpdateProfile(ctx context.Context, name string, p config.Context) (config.File, error) {
 	f, _, err := config.Load()
 	if err != nil {
 		return config.File{}, err
 	}
-	if _, ok := f.Profiles[name]; !ok {
+	if _, ok := f.Contexts[name]; !ok {
 		return *f, fmt.Errorf("profil %q introuvable", name)
 	}
-	f.Profiles[name] = p
+	f.Contexts[name] = p
 	return *f, config.Save(f)
 }
 
@@ -68,9 +68,9 @@ func (s *configService) DeleteProfile(ctx context.Context, name string) (config.
 	if err != nil {
 		return config.File{}, err
 	}
-	delete(f.Profiles, name)
-	if f.DefaultProfile == name {
-		f.DefaultProfile = ""
+	delete(f.Contexts, name)
+	if f.DefaultContext == name {
+		f.DefaultContext = ""
 	}
 	return *f, config.Save(f)
 }
@@ -80,21 +80,21 @@ func (s *configService) SetDefaultProfile(ctx context.Context, name string) (con
 	if err != nil {
 		return config.File{}, err
 	}
-	if _, ok := f.Profiles[name]; !ok {
+	if _, ok := f.Contexts[name]; !ok {
 		return *f, fmt.Errorf("profil %q introuvable", name)
 	}
-	f.DefaultProfile = name
+	f.DefaultContext = name
 	return *f, config.Save(f)
 }
 
-func (s *configService) CurrentProfile(ctx context.Context) (string, config.Profile, error) {
+func (s *configService) CurrentProfile(ctx context.Context) (string, config.Context, error) {
 	f, _, err := config.Load()
 	if err != nil {
-		return "", config.Profile{}, err
+		return "", config.Context{}, err
 	}
-	p, ok := f.Profiles[f.DefaultProfile]
+	p, ok := f.Contexts[f.DefaultContext]
 	if !ok {
-		return "", config.Profile{}, fmt.Errorf("aucun profil par défaut")
+		return "", config.Context{}, fmt.Errorf("aucun profil par défaut")
 	}
-	return f.DefaultProfile, p, nil
+	return f.DefaultContext, p, nil
 }

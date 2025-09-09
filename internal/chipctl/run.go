@@ -7,8 +7,8 @@ import (
 	"github.com/sebundefined/chirpctl/internal/app"
 	"github.com/sebundefined/chirpctl/internal/build"
 	"github.com/sebundefined/chirpctl/internal/commands"
-	"github.com/sebundefined/chirpctl/internal/config"
 	"github.com/sebundefined/chirpctl/internal/options"
+	"github.com/sebundefined/chirpctl/internal/service/config/fsimpl"
 	"github.com/sebundefined/chirpctl/utils"
 )
 
@@ -30,13 +30,8 @@ func Run() ExitCode {
 	fmt.Println("Chirspack CLI Build Date:", buildDate)
 	fmt.Println("Chirspack CLI has debug:", hasDebug)
 
-	cfg, _, err := config.Load()
-	if err != nil {
-		return 1
-	}
-	fmt.Println("Chirspack CLI Config:", cfg)
 	a := &app.App{
-		Cfg: cfg,
+		CfgSvc: fsimpl.New(),
 		Overrides: options.Options{
 			// valeurs par défaut des flags (root les exposera)
 			Output:     "table",
@@ -48,7 +43,7 @@ func Run() ExitCode {
 	//ctx := context.Background()
 	//cmd := commands.NewRootCmd(cfg)
 	//cmdFactory := cmdutils.NewFactory()
-	err = rootCmd.ExecuteContext(context.Background())
+	err := rootCmd.ExecuteContext(context.Background())
 	if err != nil {
 		return exitError
 	}

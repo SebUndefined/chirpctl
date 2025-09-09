@@ -7,6 +7,7 @@ import (
 	"github.com/sebundefined/chirpctl/internal/app"
 	"github.com/sebundefined/chirpctl/internal/cmdutils"
 	"github.com/sebundefined/chirpctl/internal/commands/application"
+	"github.com/sebundefined/chirpctl/internal/commands/config"
 	"github.com/sebundefined/chirpctl/internal/commands/device"
 	"github.com/sebundefined/chirpctl/internal/commands/gateway"
 	"github.com/sebundefined/chirpctl/internal/options"
@@ -35,6 +36,10 @@ func NewRootCmd(a *app.App) *cobra.Command {
 		Use:   "chirpctl",
 		Short: "CLI ChipStark (gRPC)",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			// 1) Les commandes `chipctl config ...` n’ont pas besoin de config chargée
+			if isConfigCommand(cmd) {
+				return nil
+			}
 			// fusionner flags persistents et locaux du root
 			merged := pflag.NewFlagSet("all", pflag.ContinueOnError)
 			merged.AddFlagSet(cmd.InheritedFlags())
@@ -74,6 +79,7 @@ func NewRootCmd(a *app.App) *cobra.Command {
 
 	// Brancher les sous-commandes
 	cmd.AddCommand(
+		config.NewConfigCommand(a),
 		application.NewApplicationCommand(a),
 		device.NewDeviceCommand(a),
 		gateway.NewGatewayCommand(a),
@@ -88,4 +94,14 @@ func NewRootCmd(a *app.App) *cobra.Command {
 	)
 
 	return cmd
+}
+
+// isConfigCommand retourne vrai si la commande en cours est sous l’arbre "config"
+func isConfigCommand(cmd *cobra.Command) bool {
+	for c := cmd; c != nil; c = c.Parent() {
+		if c.Name() == "config" {
+			return true
+		}
+	}
+	return false
 }

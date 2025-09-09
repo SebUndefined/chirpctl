@@ -1,10 +1,11 @@
 package config
 
 import (
+	"github.com/sebundefined/chirpctl/internal/app"
 	"github.com/spf13/cobra"
 )
 
-func NewConfigCommand() *cobra.Command {
+func NewConfigCommand(a *app.App) *cobra.Command {
 	// userCmd represents the user command
 	var userCmd = &cobra.Command{
 		Use:   "config",
@@ -17,7 +18,9 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	}
 	userCmd.AddCommand(
-		newProfileCommand(),
+		newGetCurrentProfileCommand(a),
+		newProfileCommand(a),
+		newInitConfigCommand(a),
 	)
 	return userCmd
 }

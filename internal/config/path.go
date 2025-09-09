@@ -47,7 +47,7 @@ func Path() (string, error) {
 	}
 	if os.Getenv("CHIPCTL_DEV") == "1" {
 		if cwd, err := os.Getwd(); err == nil {
-			return filepath.Join(cwd, "chipctl-local-dev", "config.yaml"), nil
+			return filepath.Join(cwd, "chirpctl-local-dev", "config.yaml"), nil
 		}
 	}
 	d, err := Dir()
