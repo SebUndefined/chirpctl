@@ -1,18 +1,17 @@
 package cmdutils
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"net"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/sebundefined/chirpctl/internal/chirpstack/v4"
 	"github.com/sebundefined/chirpctl/internal/service/device"
 	"github.com/sebundefined/chirpctl/internal/service/gateway"
-	"google.golang.org/grpc/metadata"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -111,6 +110,11 @@ func (f *factory) grpcConn() (*grpc.ClientConn, error) {
 			dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		} else {
 			tlsCfg := &tls.Config{ServerName: f.cfg.ServerName}
+			if tlsCfg.ServerName == "" {
+				if host, _, err := net.SplitHostPort(f.cfg.Addr); err == nil {
+					tlsCfg.ServerName = host
+				}
+			}
 			if f.cfg.CACert != "" {
 				ca, err := os.ReadFile(f.cfg.CACert)
 				if err != nil {
@@ -122,7 +126,7 @@ func (f *factory) grpcConn() (*grpc.ClientConn, error) {
 			}
 			dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsCfg)))
 		}
-		unary := grpc.WithUnaryInterceptor(func(
+		/*unary := grpc.WithUnaryInterceptor(func(
 			ctx context.Context,
 			method string,
 			req, reply interface{},
@@ -136,8 +140,13 @@ func (f *factory) grpcConn() (*grpc.ClientConn, error) {
 			}
 			md.Append("user-agent", "chipctl/1")
 			return invoker(metadata.NewOutgoingContext(ctx, md), method, req, reply, cc, callOpts...)
-		})
-		dialOpts = append(dialOpts, unary)
+		})*/
+		// Auth sur toutes les RPC
+		//dialOpts = append(dialOpts, unary)
+		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(bearerCreds{
+			token:    strings.TrimSpace(f.cfg.Token),
+			insecure: f.cfg.Insecure,
+		}))
 
 		conn, err := grpc.NewClient(f.cfg.Addr, dialOpts...)
 		if err != nil {

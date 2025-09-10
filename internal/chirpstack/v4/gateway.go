@@ -18,13 +18,13 @@ func NewGatewayService(conn *grpc.ClientConn) svcgateway.Service {
 
 func (s *gatewaySvc) List(ctx context.Context, p svcgateway.ListParams) (svcgateway.ListResult, error) {
 	list, err := s.c.List(ctx, &apiv4.ListGatewaysRequest{
-		Limit:            10,
-		Offset:           0,
-		Search:           "",
-		TenantId:         "",
-		MulticastGroupId: "",
+		Limit:            p.GetSafeLimit(),
+		Offset:           p.Offset,
+		Search:           p.Search,
+		TenantId:         p.TenantID,
+		MulticastGroupId: p.MulticastGroupID,
 		OrderBy:          1,
-		OrderByDesc:      false,
+		OrderByDesc:      p.OrderByDesc,
 	})
 	if err != nil {
 		return svcgateway.ListResult{}, err

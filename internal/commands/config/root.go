@@ -21,6 +21,7 @@ to quickly create a Cobra application.`,
 		newGetCurrentProfileCommand(a),
 		newProfileCommand(a),
 		newInitConfigCommand(a),
+		newSetContextCommand(a),
 	)
 	return userCmd
 }

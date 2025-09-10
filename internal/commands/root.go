@@ -17,7 +17,7 @@ import (
 )
 
 type RootOptions struct {
-	Profile    string
+	Context    string
 	Addr       string
 	Insecure   bool
 	CACert     string
@@ -72,9 +72,10 @@ func NewRootCmd(a *app.App) *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVar(&override.Profile, "profile", "", "Profile to use")
+	cmd.PersistentFlags().StringVar(&override.Context, "context", "", "Context to user")
 	cmd.PersistentFlags().StringVar(&override.Addr, "addr", "", "gRPC address (host:port)")
 	cmd.PersistentFlags().BoolVar(&override.Insecure, "insecure", false, "Disabled TLS certificate verification")
+	cmd.PersistentFlags().StringVar(&override.ApiVersion, "api-version", "v4", "Set the API version")
 	cmd.PersistentFlags().StringVar(&override.CACert, "cacert", "", "Path to CA certificate")
 	cmd.PersistentFlags().StringVar(&override.ServerName, "server-name", "", "SNI / TLS name")
 	cmd.PersistentFlags().StringVar(&override.Token, "token", "", "API token (Bearer)")
@@ -84,12 +85,13 @@ func NewRootCmd(a *app.App) *cobra.Command {
 
 	cmd.AddCommand(
 		config.NewConfigCommand(a),
-		NewVerbFirstRouter(shared.Get.String(), map[shared.Resource]*cobra.Command{
-			shared.Device: device.NewGetCommand(a),
+		NewVerbFirstRouter(shared.Get.String(), map[shared.Resource][]string{
+			shared.Device: {shared.Device.String(), shared.Get.String()},
 			//Gateway: gateway.NewGatewayGetCmd(a),
 		}),
-		NewVerbFirstRouter(shared.List.String(), map[shared.Resource]*cobra.Command{
-			shared.Device: device.NewListCommand(a),
+		NewVerbFirstRouter(shared.List.String(), map[shared.Resource][]string{
+			shared.Device:  {shared.Device.String(), shared.List.String()},
+			shared.Gateway: {shared.Gateway.String(), shared.List.String()},
 			//Gateway: gateway.NewGatewayGetCmd(a),
 		}),
 		application.NewApplicationCommand(a),

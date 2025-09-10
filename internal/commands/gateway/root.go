@@ -8,7 +8,7 @@ import (
 func NewGatewayCommand(a *app.App) *cobra.Command {
 	// userCmd represents the user command
 	var userCmd = &cobra.Command{
-		Use:   "gateway",
+		Use:   "gateways",
 		Short: "A brief description of your command",
 		Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:

@@ -1,7 +1,6 @@
 package device
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -10,18 +9,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type ListOptions struct {
-	ApplicationID string
-}
-
 func NewListCommand(a *app.App) *cobra.Command {
-	var listOptions ListOptions
+	var listOptions device.ListParams
 	var cmd = &cobra.Command{
 		Use:   "list",
 		Short: "List the devices",
 		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println("test")
 			svc, err := a.Factory.Device()
 			if err != nil {
 				return err
@@ -35,7 +29,7 @@ func NewListCommand(a *app.App) *cobra.Command {
 			tw := table.NewWriter()
 			tw.SetOutputMirror(os.Stdout)
 			tw.AppendHeader(table.Row{"DevEUI", "Name", "Created At", "Updated At", "Last seen", "Profile name"})
-			for _, d := range list.Result {
+			for _, d := range list.Items {
 				tw.AppendRow(table.Row{
 					d.DevEUI,
 					d.Name,
@@ -45,7 +39,7 @@ func NewListCommand(a *app.App) *cobra.Command {
 					d.DeviceProfileName,
 				})
 			}
-			if len(list.Result) == 0 {
+			if len(list.Items) == 0 {
 				tw.AppendRow(table.Row{"—", "—", "—", "—", "—", "—"})
 			}
 			tw.Render()
@@ -53,6 +47,6 @@ func NewListCommand(a *app.App) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVarP(&listOptions.ApplicationID, "app-id", "a", "", "Application UUID")
-	_ = cmd.MarkFlagRequired("app")
+	_ = cmd.MarkFlagRequired("app-id")
 	return cmd
 }

@@ -1,8 +1,13 @@
 package config
 
 import (
+	"errors"
+	"fmt"
+	"net"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -24,6 +29,29 @@ type Context struct {
 	ApiVersion string `yaml:"apiVersion"`
 }
 
+func (c Context) Validate() error {
+	if c.Addr == "" {
+		return errors.New("addr is required")
+	}
+	if _, _, err := net.SplitHostPort(c.Addr); err != nil {
+		return fmt.Errorf("invalid addr %q: %w", c.Addr, err)
+	}
+	if c.Timeout != "" {
+		if _, err := time.ParseDuration(c.Timeout); err != nil {
+			return fmt.Errorf("invalid timeout %q: %w", c.Timeout, err)
+		}
+	}
+	if len(strings.TrimSpace(c.ApiVersion)) == 0 {
+		return errors.New("apiVersion is required")
+	}
+	if c.MTls.Enabled {
+		if c.MTls.ClientCert == "" || c.MTls.ClientKey == "" {
+			return errors.New("mTLS enabled but client-cert or client-key missing")
+		}
+	}
+	return nil
+}
+
 type File struct {
 	Version        int                `yaml:"version"`
 	DefaultContext string             `yaml:"defaultContext"`
@@ -37,9 +65,6 @@ func Load() (*File, string, error) {
 	}
 
 	b, err := os.ReadFile(p)
-	/*if errors.Is(err, os.ErrNotExist) {
-		return &File{Version: 1, Contexts: map[string]Context{}}, p, nil
-	}*/
 	if err != nil {
 		return nil, "", err
 	}

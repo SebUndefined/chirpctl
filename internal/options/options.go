@@ -14,7 +14,7 @@ import (
 )
 
 type Options struct {
-	Profile    string        `json:"profile"`
+	Context    string        `json:"context"`
 	Addr       string        `json:"addr"`
 	Insecure   bool          `json:"insecure"`
 	CACert     string        `json:"caCert"`
@@ -73,21 +73,25 @@ func Resolve(cfg *config.File, flags *pflag.FlagSet, env map[string]string) Opti
 	var o Options
 
 	// --- 1) Profil YAML ---
-	// choisir le profil (flag > env > default)
-	profileName := ""
-	if flags != nil && flags.Changed("profile") {
-		profileName, _ = flags.GetString("profile")
+	// choisir le context (flag > env > default)
+	contextName := ""
+	if flags != nil && flags.Changed("context") {
+		contextName, _ = flags.GetString("context")
 	}
-	if profileName == "" {
+	if contextName == "" {
 		if v, ok := getEnv("CHIPCTL_PROFILE"); ok {
-			profileName = v
+			contextName = v
 		}
 	}
-	if profileName == "" && cfg.DefaultContext != "" {
-		profileName = cfg.DefaultContext
+	fmt.Println(contextName)
+	fmt.Println(contextName)
+	fmt.Println(contextName)
+	fmt.Println(contextName)
+	if contextName == "" && cfg.DefaultContext != "" {
+		contextName = cfg.DefaultContext
 	}
-	if p, ok := cfg.Contexts[profileName]; ok {
-		o.Profile = profileName
+	if p, ok := cfg.Contexts[contextName]; ok {
+		o.Context = contextName
 		o.Addr = p.Addr
 		o.Insecure = p.Insecure
 		o.CACert = p.CACert

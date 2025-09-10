@@ -1,6 +1,10 @@
 package gateway
 
-import "time"
+import (
+	"time"
+
+	"github.com/sebundefined/chirpctl/internal/service/shared"
+)
 
 // Gateway represent a Device
 type Gateway struct {
@@ -42,7 +46,11 @@ type ListResult struct {
 }
 
 type ListParams struct {
-	ApplicationID string
+	shared.ListPaginationRequest
+	shared.ListOrderByRequest
+	shared.ListTagsFilterRequest
+	TenantID         string
+	MulticastGroupID string
 }
 
 type DeleteParams struct {

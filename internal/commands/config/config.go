@@ -3,9 +3,13 @@ package config
 import (
 	"errors"
 	"fmt"
+	"net"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/sebundefined/chirpctl/internal/app"
+	"github.com/sebundefined/chirpctl/internal/commands/cmdutils"
 	"github.com/sebundefined/chirpctl/internal/config"
 	configWizard "github.com/sebundefined/chirpctl/internal/tui/config"
 	"github.com/spf13/cobra"
@@ -13,14 +17,9 @@ import (
 
 func newProfileCommand(a *app.App) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "profile",
-		Short: "A brief description of your command",
-		Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+		Use:   "config",
+		Short: "Manage chirpctl configuration",
+		Long:  ``,
 	}
 	cmd.AddCommand(
 		newInitConfigCommand(a),
@@ -47,6 +46,70 @@ func newGetCurrentProfileCommand(a *app.App) *cobra.Command {
 			return err
 			a.CfgSvc.Init(cmd.Context())
 			fmt.Println(a.Cfg)*/
+			return nil
+		},
+	}
+
+	return cmd
+}
+
+func newSetContextCommand(a *app.App) *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "set-context",
+		Short: "Set a context entry in the configuration file",
+		Long:  `Specifying a name that already exists will merge new fields on top of existing values for those fields.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfgFile, err := a.CfgSvc.Get(cmd.Context())
+			if err != nil && !errors.Is(err, os.ErrNotExist) {
+				return err
+			}
+			if cfgFile == nil {
+				cfgFile = &config.File{Version: 1, Contexts: map[string]config.Context{}}
+			}
+			contextName, _ := cmd.Flags().GetString("context")
+			if contextName == "" {
+				return errors.New("--context is required")
+			}
+			ctx, existed := cfgFile.Contexts[contextName] // zéro value si nouveau
+
+			// 3) merge avec flags root (uniquement ceux passés)
+			cmdutils.SetIfString(cmd, "addr", func(v string) { ctx.Addr = v })
+			cmdutils.SetIfBool(cmd, "insecure", func(v bool) { ctx.Insecure = v })
+			cmdutils.SetIfString(cmd, "cacert", func(v string) { ctx.CACert = v })
+			cmdutils.SetIfString(cmd, "server-name", func(v string) {
+				ctx.ServerName = v
+				if !ctx.Insecure && ctx.ServerName == "" {
+					if host, _, err := net.SplitHostPort(ctx.Addr); err == nil {
+						ctx.ServerName = host
+					}
+				}
+			})
+			cmdutils.SetIfString(cmd, "token", func(v string) { ctx.Token = v })
+			cmdutils.SetIfDuration(cmd, "timeout", func(d time.Duration) { ctx.Timeout = d.String() })
+			cmdutils.SetIfString(cmd, "api-version", func(v string) { ctx.ApiVersion = v })
+			if errValidation := ctx.Validate(); errValidation != nil {
+				return errValidation
+			}
+			// 4) écrire et sauver
+			cfgFile.Contexts[contextName] = ctx
+			if len(strings.TrimSpace(cfgFile.DefaultContext)) == 0 {
+				cfgFile.DefaultContext = contextName
+			}
+			if err := config.Save(cfgFile); err != nil {
+				return err
+			}
+
+			if err := config.Save(cfgFile); err != nil {
+				return err
+			}
+			if !existed {
+				fmt.Printf("context %q created\n", contextName)
+			} else {
+				fmt.Printf("context %q updated\n", contextName)
+			}
+			if cfgFile.DefaultContext == contextName {
+				fmt.Printf("default context: %s\n", contextName)
+			}
 			return nil
 		},
 	}

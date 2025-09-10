@@ -19,7 +19,7 @@ func NewDeviceService(conn *grpc.ClientConn) svcdevice.Service {
 
 func (s *deviceSvc) List(ctx context.Context, p svcdevice.ListParams) (shared.ListResult[svcdevice.ListItem], error) {
 	req := &apiv4.ListDevicesRequest{
-		Limit:         p.Limit,
+		Limit:         p.GetSafeLimit(),
 		Offset:        p.Offset,
 		Search:        p.Search,
 		ApplicationId: p.ApplicationID,

@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/sebundefined/chirpctl/internal/app"
+	"github.com/sebundefined/chirpctl/internal/commands/cmdutils"
 	"github.com/sebundefined/chirpctl/internal/service/gateway"
 	"github.com/spf13/cobra"
 )
@@ -33,17 +34,18 @@ func (o *ListGatewayOptions) Run(parent context.Context) error {
 }
 
 func newListCommand(a *app.App) *cobra.Command {
-	// userCmd represents the user command
-	var userCmd = &cobra.Command{
+	var listParams gateway.ListParams
+	var cmd = &cobra.Command{
 		Use:   "list",
 		Short: "List gateways",
 		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
+
 			svc, err := a.Factory.Gateway()
 			if err != nil {
 				return err
 			}
-			list, err := svc.List(context.Background(), gateway.ListParams{})
+			list, err := svc.List(context.Background(), listParams)
 			if err != nil {
 				return err
 			}
@@ -68,5 +70,10 @@ func newListCommand(a *app.App) *cobra.Command {
 			return nil
 		},
 	}
-	return userCmd
+	cmd.Flags().StringVarP(&listParams.TenantID, "tenant-id", "t", "", "Tenant UUID (required)")
+	cmdutils.AttachPaginationFlags(cmd, &listParams.ListPaginationRequest)
+	cmdutils.AttachOrderByFlags(cmd, &listParams.ListOrderByRequest)
+	//cmdutils.AttachTagFlags(cmd, &listParams.Tags)
+	_ = cmd.MarkFlagRequired("tenant-id")
+	return cmd
 }
