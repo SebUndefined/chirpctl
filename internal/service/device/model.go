@@ -1,6 +1,10 @@
 package device
 
-import "time"
+import (
+	"time"
+
+	"github.com/sebundefined/chirpctl/internal/service/shared"
+)
 
 // Device represent a Device
 type Device struct {
@@ -17,7 +21,24 @@ type Device struct {
 }
 
 type CreateParams struct {
-	Device *Device
+	Device Device
+}
+
+type Patch struct {
+	Name            *string
+	Description     *string
+	ApplicationID   *string
+	DeviceProfileID *string
+	SkipFcntCheck   *bool
+	IsDisabled      *bool
+	Variables       *shared.MapPatch
+	Tags            *shared.MapPatch
+	JoinEui         *string
+}
+
+type UpdateParams struct {
+	DevEUI string
+	Patch  Patch
 }
 
 type GetParams struct {
@@ -37,11 +58,10 @@ type ListItem struct {
 	Tags              map[string]string
 }
 
-type ListResult struct {
-	TotalCount uint32
-	Result     []*ListItem
-}
-
 type ListParams struct {
-	ApplicationID string
+	shared.ListPaginationRequest
+	shared.ListOrderByRequest
+	shared.ListTagsFilterRequest
+	DeviceProfileID string
+	ApplicationID   string
 }

@@ -2,65 +2,59 @@ package v4
 
 import (
 	"context"
-	"time"
 
 	apiv4 "github.com/chirpstack/chirpstack/api/go/v4/api"
-	"github.com/samber/lo"
 	svcdevice "github.com/sebundefined/chirpctl/internal/service/device"
+	"github.com/sebundefined/chirpctl/internal/service/shared"
 	"google.golang.org/grpc"
 )
 
 type deviceSvc struct{ c apiv4.DeviceServiceClient }
 
 func NewDeviceService(conn *grpc.ClientConn) svcdevice.Service {
-	return &deviceSvc{c: apiv4.NewDeviceServiceClient(conn)}
+	return &deviceSvc{
+		c: apiv4.NewDeviceServiceClient(conn),
+	}
 }
 
-func (s *deviceSvc) List(ctx context.Context, p svcdevice.ListParams) (svcdevice.ListResult, error) {
-	list, err := s.c.List(ctx, &apiv4.ListDevicesRequest{
-		Limit:            10,
-		Offset:           0,
-		Search:           "",
-		ApplicationId:    p.ApplicationID,
-		MulticastGroupId: "",
-		OrderBy:          1,
-		OrderByDesc:      false,
-		Tags:             nil,
-		DeviceProfileId:  "",
-	})
+func (s *deviceSvc) List(ctx context.Context, p svcdevice.ListParams) (shared.ListResult[svcdevice.ListItem], error) {
+	req := &apiv4.ListDevicesRequest{
+		Limit:         p.Limit,
+		Offset:        p.Offset,
+		Search:        p.Search,
+		ApplicationId: p.ApplicationID,
+		//OrderBy:         p.OrderBy,
+		OrderByDesc:     p.OrderByDesc,
+		DeviceProfileId: p.DeviceProfileID,
+		Tags:            p.Tags,
+	}
+	out := shared.NewListResult[svcdevice.ListItem]()
+
+	resp, err := s.c.List(ctx, req)
 	if err != nil {
-		return svcdevice.ListResult{}, err
+		return out, err
 	}
-	res := svcdevice.ListResult{
-		TotalCount: list.GetTotalCount(),
-	}
-	res.Result = lo.Map(list.Result, func(item *apiv4.DeviceListItem, _ int) *svcdevice.ListItem {
-		return &svcdevice.ListItem{
-			DevEUI: item.DevEui,
-			CreatedAt: lo.TernaryF(item.CreatedAt != nil, func() *time.Time {
-				return lo.ToPtr(time.Unix(item.CreatedAt.Seconds, 0))
-			}, func() *time.Time {
-				return nil
-			}),
-			UpdatedAt: lo.TernaryF(item.UpdatedAt != nil, func() *time.Time {
-				return lo.ToPtr(time.Unix(item.UpdatedAt.Seconds, 0))
-			}, func() *time.Time {
-				return nil
-			}),
-			LastSeenAt: lo.TernaryF(item.LastSeenAt != nil, func() *time.Time {
-				return lo.ToPtr(time.Unix(item.LastSeenAt.Seconds, 0))
-			}, func() *time.Time {
-				return nil
-			}),
-			Name:              item.Name,
-			Description:       item.Description,
-			DeviceProfileID:   item.DeviceProfileId,
-			DeviceProfileName: item.DeviceProfileName,
+
+	out.TotalCount = resp.GetTotalCount()
+	items := resp.GetResult()
+	out = shared.NewListResultCap[svcdevice.ListItem](len(items))
+
+	out.TotalCount = resp.GetTotalCount()
+	for _, it := range items {
+		out.Add(svcdevice.ListItem{
+			DevEUI:            it.DevEui,
+			CreatedAt:         shared.TsProtobufToPtrTime(it.CreatedAt),
+			UpdatedAt:         shared.TsProtobufToPtrTime(it.UpdatedAt),
+			LastSeenAt:        shared.TsProtobufToPtrTime(it.LastSeenAt),
+			Name:              it.Name,
+			Description:       it.Description,
+			DeviceProfileID:   it.DeviceProfileId,
+			DeviceProfileName: it.DeviceProfileName,
 			DeviceStatus:      nil,
-			Tags:              item.Tags,
-		}
-	})
-	return res, nil
+			Tags:              it.Tags,
+		})
+	}
+	return out, nil
 }
 
 func (s *deviceSvc) Get(ctx context.Context, p svcdevice.GetParams) (*svcdevice.Device, error) {
@@ -85,8 +79,51 @@ func (s *deviceSvc) Create(ctx context.Context, p svcdevice.CreateParams) error 
 		req.Device.Name = *p.Device.Name
 	}
 	if p.DeviceProfileID != nil {
-		req.Device.DeviceProfileId = *p.DeviceProfileID
+		req.Device.DeviceProfileID = *p.DeviceProfileID
 	}*/
 	_, err := s.c.Create(ctx, req)
+	return err
+}
+
+func (s *deviceSvc) Update(ctx context.Context, p svcdevice.UpdateParams) error {
+	device, err := s.Get(ctx, svcdevice.GetParams{DevEUI: p.DevEUI})
+	if err != nil {
+		return err
+	}
+	request := apiv4.UpdateDeviceRequest{
+		Device: &apiv4.Device{
+			DevEui:          device.DevEUI,
+			Name:            device.Name,
+			Description:     device.Description,
+			ApplicationId:   device.ApplicationID,
+			DeviceProfileId: device.DeviceProfileID,
+			SkipFcntCheck:   device.SkipFcntCheck,
+			Variables:       device.Variables,
+			Tags:            device.Tags,
+			JoinEui:         device.JoinEui,
+		},
+	}
+	if p.Patch.Name != nil {
+		request.Device.Name = *p.Patch.Name
+	}
+	if p.Patch.Description != nil {
+		request.Device.Description = *p.Patch.Description
+	}
+	if p.Patch.ApplicationID != nil {
+		request.Device.ApplicationId = *p.Patch.ApplicationID
+	}
+	if p.Patch.DeviceProfileID != nil {
+		request.Device.DeviceProfileId = *p.Patch.DeviceProfileID
+	}
+	if p.Patch.SkipFcntCheck != nil {
+		request.Device.SkipFcntCheck = *p.Patch.SkipFcntCheck
+	}
+	if p.Patch.Variables != nil {
+		request.Device.Variables = shared.UpdateMap(p.Patch.Variables, device.Variables)
+	}
+	if p.Patch.Tags != nil {
+		request.Device.Tags = shared.UpdateMap(p.Patch.Tags, device.Tags)
+	}
+	_, err = s.c.Update(ctx, &request)
 	return err
 }

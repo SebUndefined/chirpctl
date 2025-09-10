@@ -69,3 +69,10 @@ func (s *gatewaySvc) Create(ctx context.Context, p svcgateway.CreateParams) erro
 	//TODO implement me
 	panic("implement me")
 }
+
+func (s *gatewaySvc) Delete(ctx context.Context, p svcgateway.DeleteParams) error {
+	_, err := s.c.Delete(ctx, &apiv4.DeleteGatewayRequest{
+		GatewayId: p.GatewayID,
+	})
+	return err
+}
