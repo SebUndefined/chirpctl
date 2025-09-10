@@ -8,6 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/jedib0t/go-pretty/v6/text"
+	"github.com/samber/lo"
 	"github.com/sebundefined/chirpctl/internal/app"
 	"github.com/sebundefined/chirpctl/internal/commands/cmdutils"
 	"github.com/sebundefined/chirpctl/internal/config"
@@ -15,22 +18,135 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newProfileCommand(a *app.App) *cobra.Command {
+func newCurrentContextCommand(a *app.App) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "config",
-		Short: "Manage chirpctl configuration",
+		Use:   "current-context",
+		Short: "A brief description of your command",
 		Long:  ``,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfgFile, err := a.CfgSvc.Get(cmd.Context())
+			if err != nil && !errors.Is(err, os.ErrNotExist) {
+				return err
+			}
+			if cfgFile == nil {
+				cfgFile = &config.File{Version: 1, Contexts: map[string]config.Context{}}
+			}
+			tw := table.NewWriter()
+			tw.SetOutputMirror(os.Stdout)
+			tw.SetStyle(table.StyleLight)
+			tw.AppendHeader(table.Row{"Current", "Name", "API Version", "Address", "Insecure"})
+
+			for name, ctx := range cfgFile.Contexts {
+				isCurrent := cfgFile.DefaultContext == name
+
+				currentCol := ""
+				displayName := name
+				addr := ctx.Addr
+				insecure := lo.Ternary(ctx.Insecure, "Insecure", "Secure")
+
+				if isCurrent {
+					currentCol = text.FgGreen.Sprint("●") // petit point vert discret
+					displayName = text.Bold.Sprint(displayName)
+				} else {
+					addr = text.FgHiBlack.Sprint(addr) // adresse « grisée » quand non courant
+				}
+				if ctx.Insecure {
+					insecure = text.FgHiYellow.Sprint(insecure)
+				} else {
+					insecure = text.FgHiGreen.Sprint(insecure)
+				}
+				tw.AppendRow(table.Row{
+					currentCol,
+					displayName,
+					ctx.ApiVersion,
+					addr,
+					insecure,
+				})
+			}
+
+			if len(cfgFile.Contexts) == 0 {
+				tw.AppendRow(table.Row{
+					text.FgHiBlack.Sprint("—"),
+					text.FgHiBlack.Sprint("—"),
+					text.FgHiBlack.Sprint("—"),
+					text.FgHiBlack.Sprint("—"),
+				})
+			}
+
+			tw.Render()
+			return nil
+		},
 	}
-	cmd.AddCommand(
-		newInitConfigCommand(a),
-		newGetCurrentProfileCommand(a),
-	)
+
 	return cmd
 }
 
-func newGetCurrentProfileCommand(a *app.App) *cobra.Command {
+func newGetContextsCommand(a *app.App) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "view",
+		Use:   "get-contexts",
+		Short: "A brief description of your command",
+		Long:  ``,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfgFile, err := a.CfgSvc.Get(cmd.Context())
+			if err != nil && !errors.Is(err, os.ErrNotExist) {
+				return err
+			}
+			if cfgFile == nil {
+				cfgFile = &config.File{Version: 1, Contexts: map[string]config.Context{}}
+			}
+			tw := table.NewWriter()
+			tw.SetOutputMirror(os.Stdout)
+			tw.SetStyle(table.StyleLight)
+			tw.AppendHeader(table.Row{"Current", "Name", "API Version", "Address", "Insecure"})
+
+			for name, ctx := range cfgFile.Contexts {
+				isCurrent := cfgFile.DefaultContext == name
+
+				currentCol := ""
+				displayName := name
+				addr := ctx.Addr
+				insecure := lo.Ternary(ctx.Insecure, "Insecure", "Secure")
+
+				if isCurrent {
+					currentCol = text.FgGreen.Sprint("●") // petit point vert discret
+					displayName = text.Bold.Sprint(displayName)
+				} else {
+					addr = text.FgHiBlack.Sprint(addr) // adresse « grisée » quand non courant
+				}
+				if ctx.Insecure {
+					insecure = text.FgHiYellow.Sprint(insecure)
+				} else {
+					insecure = text.FgHiGreen.Sprint(insecure)
+				}
+				tw.AppendRow(table.Row{
+					currentCol,
+					displayName,
+					ctx.ApiVersion,
+					addr,
+					insecure,
+				})
+			}
+
+			if len(cfgFile.Contexts) == 0 {
+				tw.AppendRow(table.Row{
+					text.FgHiBlack.Sprint("—"),
+					text.FgHiBlack.Sprint("—"),
+					text.FgHiBlack.Sprint("—"),
+					text.FgHiBlack.Sprint("—"),
+				})
+			}
+
+			tw.Render()
+			return nil
+		},
+	}
+
+	return cmd
+}
+
+func newDeleteContextsCommand(a *app.App) *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "delete-context",
 		Short: "A brief description of your command",
 		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {

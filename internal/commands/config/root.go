@@ -18,10 +18,11 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	}
 	userCmd.AddCommand(
-		newGetCurrentProfileCommand(a),
-		newProfileCommand(a),
+		newGetContextsCommand(a),
+		newCurrentContextCommand(a),
 		newInitConfigCommand(a),
 		newSetContextCommand(a),
+		newDeleteContextsCommand(a),
 	)
 	return userCmd
 }
