@@ -44,7 +44,7 @@ func newGetCurrentProfileCommand(a *app.App) *cobra.Command {
 			}
 
 			p := tea.NewProgram(NewProfileView(name, prof))
-			res, err := p.Run()
+			res, err := p.RunNewContextWizard()
 			return err
 			a.CfgSvc.Init(cmd.Context())
 			fmt.Println(a.Cfg)*/
@@ -68,14 +68,14 @@ func newInitConfigCommand(a *app.App) *cobra.Command {
 			if get != nil && len(get.Contexts) > 0 {
 				return errors.New("config Already Exists")
 			}
-			res, err := configWizard.Run()
+			res, err := configWizard.RunNewContextWizard()
 			if err != nil {
 				return err
 			}
 
 			init, err := a.CfgSvc.Init(cmd.Context(), config.File{
 				Version:        1,
-				DefaultContext: res.ServerName,
+				DefaultContext: res.Name,
 				Contexts: map[string]config.Context{
 					res.Name: {
 						Addr:       res.Addr,
