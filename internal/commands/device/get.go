@@ -3,10 +3,11 @@ package device
 import (
 	"fmt"
 
+	"github.com/sebundefined/chirpctl/internal/app"
 	"github.com/spf13/cobra"
 )
 
-func newGetCommand() *cobra.Command {
+func NewGetCommand(a *app.App) *cobra.Command {
 	// userCmd represents the user command
 	var userCmd = &cobra.Command{
 		Use:   "get",

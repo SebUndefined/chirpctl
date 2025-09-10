@@ -1,6 +1,7 @@
 package device
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -13,13 +14,14 @@ type ListOptions struct {
 	ApplicationID string
 }
 
-func newListCommand(a *app.App) *cobra.Command {
+func NewListCommand(a *app.App) *cobra.Command {
 	var listOptions ListOptions
 	var cmd = &cobra.Command{
 		Use:   "list",
-		Short: "List all users",
+		Short: "List the devices",
 		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Println("test")
 			svc, err := a.Factory.Device()
 			if err != nil {
 				return err

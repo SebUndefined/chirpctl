@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newCreateCommand() *cobra.Command {
+func NewCreateCommand() *cobra.Command {
 	// userCmd represents the user command
 	var userCmd = &cobra.Command{
 		Use:   "create",

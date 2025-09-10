@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/sebundefined/chirpctl/internal/app"
 	"github.com/sebundefined/chirpctl/internal/config"
 	configWizard "github.com/sebundefined/chirpctl/internal/tui/config"
@@ -100,58 +99,4 @@ func newInitConfigCommand(a *app.App) *cobra.Command {
 	}
 
 	return cmd
-}
-
-// modèle
-type profileViewModel struct {
-	name  string
-	prof  config.Context
-	ready bool
-}
-
-func NewProfileView(name string, prof config.Context) tea.Model {
-	return &profileViewModel{name: name, prof: prof, ready: true}
-}
-
-func (m *profileViewModel) Init() tea.Cmd {
-	return nil // pas d’action asynchrone
-}
-
-func (m *profileViewModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		// fermer sur "q" ou "esc"
-		if msg.String() == "q" || msg.String() == "esc" {
-			return m, tea.Quit
-		}
-	}
-	return m, nil
-}
-
-func (m *profileViewModel) View() string {
-	if !m.ready {
-		return "Chargement du profil..."
-	}
-
-	return fmt.Sprintf(
-		`Profil courant: %s
-
-Adresse   : %s
-Insecure  : %v
-Token     : %s
-Timeout   : %s
-`,
-		m.name,
-		m.prof.Addr,
-		m.prof.Insecure,
-		truncateToken(m.prof.Token),
-		m.prof.Timeout,
-	)
-}
-
-func truncateToken(t string) string {
-	if len(t) > 10 {
-		return t[:4] + "..." + t[len(t)-4:]
-	}
-	return t
 }

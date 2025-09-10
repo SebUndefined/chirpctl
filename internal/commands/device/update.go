@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newUpdateCommand() *cobra.Command {
+func NewUpdateCommand() *cobra.Command {
 	// userCmd represents the user command
 	var userCmd = &cobra.Command{
 		Use:   "update",

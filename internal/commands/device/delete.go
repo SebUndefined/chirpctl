@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newDeleteCommand() *cobra.Command {
+func NewDeleteCommand() *cobra.Command {
 	// userCmd represents the user command
 	var userCmd = &cobra.Command{
 		Use:   "delete",

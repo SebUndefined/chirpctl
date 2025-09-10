@@ -10,6 +10,7 @@ import (
 	"github.com/sebundefined/chirpctl/internal/commands/config"
 	"github.com/sebundefined/chirpctl/internal/commands/device"
 	"github.com/sebundefined/chirpctl/internal/commands/gateway"
+	"github.com/sebundefined/chirpctl/internal/commands/shared"
 	"github.com/sebundefined/chirpctl/internal/options"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -44,7 +45,11 @@ func NewRootCmd(a *app.App) *cobra.Command {
 			merged := pflag.NewFlagSet("all", pflag.ContinueOnError)
 			merged.AddFlagSet(cmd.InheritedFlags())
 			merged.AddFlagSet(cmd.Flags())
-
+			file, err := a.CfgSvc.Get(cmd.Context())
+			if err != nil {
+				return err
+			}
+			a.Cfg = file
 			// resolve = profil YAML -> env -> flags
 			res := options.Resolve(a.Cfg, merged, nil)
 
@@ -77,9 +82,16 @@ func NewRootCmd(a *app.App) *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&override.Output, "output", "o", "table", "table|json|yaml")
 	cmd.PersistentFlags().BoolVarP(&override.Verbose, "verbose", "v", false, "Verbose logs")
 
-	// Brancher les sous-commandes
 	cmd.AddCommand(
 		config.NewConfigCommand(a),
+		NewVerbFirstRouter(shared.Get.String(), map[shared.Resource]*cobra.Command{
+			shared.Device: device.NewGetCommand(a),
+			//Gateway: gateway.NewGatewayGetCmd(a),
+		}),
+		NewVerbFirstRouter(shared.List.String(), map[shared.Resource]*cobra.Command{
+			shared.Device: device.NewListCommand(a),
+			//Gateway: gateway.NewGatewayGetCmd(a),
+		}),
 		application.NewApplicationCommand(a),
 		device.NewDeviceCommand(a),
 		gateway.NewGatewayCommand(a),
