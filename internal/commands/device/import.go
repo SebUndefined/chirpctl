@@ -24,12 +24,12 @@ func NewImportCommand(a *app.App) *cobra.Command {
 			}
 			defer closer()
 			csvReader := csv.NewReader(r)
+			csvReader.Comma = ';'
 			records, err := csvReader.ReadAll()
 			if err != nil {
 				return fmt.Errorf("Unable to parse file as CSV for "+importFlags.File, err)
 			}
 			fmt.Println(records)
-			//l := do.MustInvokeNamed[logger.Interface]("logger")
 			return nil
 		},
 	}
