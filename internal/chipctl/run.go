@@ -25,7 +25,7 @@ const (
 func Run() ExitCode {
 	buildDate := build.Date
 	buildVersion := build.Version
-	hasDebug, _ := utils.IsDebugEnabled()
+	hasDebug := utils.IsDevModeEnabled()
 	fmt.Println("Chirspack CLI Version:", buildVersion)
 	fmt.Println("Chirspack CLI Build Date:", buildDate)
 	fmt.Println("Chirspack CLI has debug:", hasDebug)

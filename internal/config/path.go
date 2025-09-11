@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+
+	"github.com/sebundefined/chirpctl/utils"
 )
 
 func Dir() (string, error) {
@@ -45,7 +47,7 @@ func Path() (string, error) {
 		}
 		return p, nil
 	}
-	if os.Getenv("CHIPCTL_DEV") == "1" {
+	if utils.IsDevModeEnabled() {
 		if cwd, err := os.Getwd(); err == nil {
 			return filepath.Join(cwd, "chirpctl-local-dev", "config.yaml"), nil
 		}

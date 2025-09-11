@@ -90,12 +90,20 @@ func NewRootCmd(a *app.App) *cobra.Command {
 
 	cmd.AddCommand(
 		config.NewConfigCommand(a),
+		// Get verb
 		NewVerbFirstRouter(shared.Get.String(), map[shared.Resource][]string{
 			shared.Device: {shared.Device.String(), shared.Get.String()},
 			//Gateway: gateway.NewGatewayGetCmd(a),
 		}),
+		// List verb
 		NewVerbFirstRouter(shared.List.String(), map[shared.Resource][]string{
 			shared.Device:  {shared.Device.String(), shared.List.String()},
+			shared.Gateway: {shared.Gateway.String(), shared.List.String()},
+			//Gateway: gateway.NewGatewayGetCmd(a),
+		}),
+		// Import verb
+		NewVerbFirstRouter(shared.Import.String(), map[shared.Resource][]string{
+			shared.Device:  {shared.Device.String(), shared.Import.String()},
 			shared.Gateway: {shared.Gateway.String(), shared.List.String()},
 			//Gateway: gateway.NewGatewayGetCmd(a),
 		}),

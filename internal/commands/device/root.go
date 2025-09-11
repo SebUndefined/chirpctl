@@ -23,6 +23,7 @@ to quickly create a Cobra application.`,
 		NewCreateCommand(),
 		NewUpdateCommand(),
 		NewDeleteCommand(),
+		NewImportCommand(a),
 	)
 	return userCmd
 }

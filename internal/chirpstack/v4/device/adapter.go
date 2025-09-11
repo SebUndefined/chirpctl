@@ -19,7 +19,6 @@ var _ device.API = (*adapter)(nil)
 
 func NewAdapter(conn *grpc.ClientConn) device.API {
 	svc := apiv4.NewDeviceServiceClient(conn)
-	s := apiv4.NewDeviceProfileServiceClient()
 	return &adapter{
 		core:       newCore(svc),
 		keys:       newKeys(svc),
