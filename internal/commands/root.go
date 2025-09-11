@@ -68,6 +68,11 @@ func NewRootCmd(a *app.App) *cobra.Command {
 				Transport:  "grpc",
 				Timeout:    res.Timeout,
 			})
+			if f := cmd.InheritedFlags().Lookup("output"); f != nil && !f.Changed {
+				if a.Cfg != nil && a.Cfg.UI != nil && a.Cfg.UI.Output != "" {
+					a.Overrides.Output = a.Cfg.UI.Output
+				}
+			}
 			return nil
 		},
 	}
@@ -80,7 +85,7 @@ func NewRootCmd(a *app.App) *cobra.Command {
 	cmd.PersistentFlags().StringVar(&override.ServerName, "server-name", "", "SNI / TLS name")
 	cmd.PersistentFlags().StringVar(&override.Token, "token", "", "API token (Bearer)")
 	cmd.PersistentFlags().DurationVar(&override.Timeout, "timeout", 10*time.Second, "Command timeout")
-	cmd.PersistentFlags().StringVarP(&override.Output, "output", "o", "table", "table|json|yaml")
+	cmd.PersistentFlags().StringVarP(&override.Output, "output", "o", "table-styled", "table-styled|table|json|yaml|csv")
 	cmd.PersistentFlags().BoolVarP(&override.Verbose, "verbose", "v", false, "Verbose logs")
 
 	cmd.AddCommand(

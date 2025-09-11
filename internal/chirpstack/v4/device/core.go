@@ -1,23 +1,23 @@
-package v4
+package device
 
 import (
 	"context"
 
 	apiv4 "github.com/chirpstack/chirpstack/api/go/v4/api"
-	svcdevice "github.com/sebundefined/chirpctl/internal/service/device"
+	"github.com/sebundefined/chirpctl/internal/service/device"
 	"github.com/sebundefined/chirpctl/internal/service/shared"
 	"google.golang.org/grpc"
 )
 
-type deviceSvc struct{ c apiv4.DeviceServiceClient }
-
-func NewDeviceService(conn *grpc.ClientConn) svcdevice.Service {
-	return &deviceSvc{
-		c: apiv4.NewDeviceServiceClient(conn),
-	}
+type core struct {
+	c apiv4.DeviceServiceClient
 }
 
-func (s *deviceSvc) List(ctx context.Context, p svcdevice.ListParams) (shared.ListResult[svcdevice.ListItem], error) {
+func newCore(conn *grpc.ClientConn) *core {
+	return &core{c: apiv4.NewDeviceServiceClient(conn)}
+}
+
+func (s *core) List(ctx context.Context, p device.ListParams) (shared.ListResult[device.ListItem], error) {
 	req := &apiv4.ListDevicesRequest{
 		Limit:         p.GetSafeLimit(),
 		Offset:        p.Offset,
@@ -28,7 +28,7 @@ func (s *deviceSvc) List(ctx context.Context, p svcdevice.ListParams) (shared.Li
 		DeviceProfileId: p.DeviceProfileID,
 		Tags:            p.Tags,
 	}
-	out := shared.NewListResult[svcdevice.ListItem]()
+	out := shared.NewListResult[device.ListItem]()
 
 	resp, err := s.c.List(ctx, req)
 	if err != nil {
@@ -37,11 +37,11 @@ func (s *deviceSvc) List(ctx context.Context, p svcdevice.ListParams) (shared.Li
 
 	out.TotalCount = resp.GetTotalCount()
 	items := resp.GetResult()
-	out = shared.NewListResultCap[svcdevice.ListItem](len(items))
+	out = shared.NewListResultCap[device.ListItem](len(items))
 
 	out.TotalCount = resp.GetTotalCount()
 	for _, it := range items {
-		out.Add(svcdevice.ListItem{
+		out.Add(device.ListItem{
 			DevEUI:            it.DevEui,
 			CreatedAt:         shared.TsProtobufToPtrTime(it.CreatedAt),
 			UpdatedAt:         shared.TsProtobufToPtrTime(it.UpdatedAt),
@@ -57,13 +57,13 @@ func (s *deviceSvc) List(ctx context.Context, p svcdevice.ListParams) (shared.Li
 	return out, nil
 }
 
-func (s *deviceSvc) Get(ctx context.Context, p svcdevice.GetParams) (*svcdevice.Device, error) {
+func (s *core) Get(ctx context.Context, p device.GetParams) (*device.Device, error) {
 	resp, err := s.c.Get(ctx, &apiv4.GetDeviceRequest{DevEui: p.DevEUI})
 	if err != nil {
 		return nil, err
 	}
 	d := resp.GetDevice()
-	return &svcdevice.Device{
+	return &device.Device{
 		DevEUI:          d.GetDevEui(),
 		Name:            d.GetName(),
 		ApplicationID:   d.GetApplicationId(),
@@ -71,7 +71,7 @@ func (s *deviceSvc) Get(ctx context.Context, p svcdevice.GetParams) (*svcdevice.
 	}, nil
 }
 
-func (s *deviceSvc) Create(ctx context.Context, p svcdevice.CreateParams) error {
+func (s *core) Create(ctx context.Context, p device.CreateParams) (string, error) {
 	req := &apiv4.CreateDeviceRequest{
 		Device: &apiv4.Device{DevEui: p.Device.DevEUI, ApplicationId: p.Device.ApplicationID},
 	}
@@ -82,11 +82,11 @@ func (s *deviceSvc) Create(ctx context.Context, p svcdevice.CreateParams) error 
 		req.Device.DeviceProfileID = *p.DeviceProfileID
 	}*/
 	_, err := s.c.Create(ctx, req)
-	return err
+	return req.Device.DevEui, err
 }
 
-func (s *deviceSvc) Update(ctx context.Context, p svcdevice.UpdateParams) error {
-	device, err := s.Get(ctx, svcdevice.GetParams{DevEUI: p.DevEUI})
+func (s *core) Update(ctx context.Context, p device.UpdateParams) error {
+	device, err := s.Get(ctx, device.GetParams{DevEUI: p.DevEUI})
 	if err != nil {
 		return err
 	}
@@ -126,4 +126,9 @@ func (s *deviceSvc) Update(ctx context.Context, p svcdevice.UpdateParams) error 
 	}
 	_, err = s.c.Update(ctx, &request)
 	return err
+}
+
+func (s *core) Delete(ctx context.Context, p device.DeleteParams) error {
+	//TODO implement me
+	panic("implement me")
 }

@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/google/uuid"
-	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/sebundefined/chirpctl/internal/app"
 	"github.com/sebundefined/chirpctl/internal/commands/cmdutils"
+	"github.com/sebundefined/chirpctl/internal/printing"
 	"github.com/sebundefined/chirpctl/internal/service/gateway"
 	"github.com/spf13/cobra"
 )
@@ -49,25 +49,38 @@ func newListCommand(a *app.App) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			tw := table.NewWriter()
-			tw.SetOutputMirror(os.Stdout)
-			tw.AppendHeader(table.Row{"DevEUI", "Name", "State", "Created At", "Updated At", "Last seen", "Tenant ID"})
+			format := printing.ParseFormat(a.Overrides.Output) // vient du flag/config
+			noColor := os.Getenv("CHIRPCTL_NO_COLOR") != ""
+
+			td := printing.TableData{
+				Headers: printing.Row{"Gateway ID", "Name", "State", "Created At", "Updated At", "Last seen", "Tenant ID"},
+				Rows:    make([]printing.Row, 0, len(list.Result)),
+			}
 			for _, d := range list.Result {
-				tw.AppendRow(table.Row{
+				stateCol := printing.StatusDot(printing.DotGray)
+				switch d.State {
+				case gateway.StateOffline:
+					stateCol = printing.StatusDot(printing.DotRed)
+				case gateway.StateOnline:
+					stateCol = printing.StatusDot(printing.DotGreen)
+				case gateway.StateNeverSeen:
+					stateCol = printing.StatusDot(printing.DotYellow)
+				default:
+					stateCol = printing.StatusDot(printing.DotGray)
+
+				}
+				td.Rows = append(td.Rows, printing.Row{
 					d.GatewayID,
 					d.Name,
-					d.State,
+					stateCol,
 					d.CreatedAt.Format("2006-01-02 15:04:05"),
 					d.UpdatedAt.Format("2006-01-02 15:04:05"),
 					d.LastSeenAt.Format("2006-01-02 15:04:05"),
 					d.TenantID,
 				})
 			}
-			if len(list.Result) == 0 {
-				tw.AppendRow(table.Row{"—", "—", "—", "—", "—", "—", "—"})
-			}
-			tw.Render()
-			return nil
+			return printing.RenderList(format, td, list, noColor)
+
 		},
 	}
 	cmd.Flags().StringVarP(&listParams.TenantID, "tenant-id", "t", "", "Tenant UUID (required)")

@@ -1,10 +1,19 @@
 package device
 
 import (
+	"context"
 	"time"
 
 	"github.com/sebundefined/chirpctl/internal/service/shared"
 )
+
+type Core interface {
+	Get(ctx context.Context, p GetParams) (*Device, error)
+	Create(ctx context.Context, p CreateParams) (string, error)
+	List(ctx context.Context, p ListParams) (shared.ListResult[ListItem], error)
+	Update(ctx context.Context, p UpdateParams) error
+	Delete(ctx context.Context, p DeleteParams) error
+}
 
 // Device represent a Device
 type Device struct {
@@ -65,3 +74,5 @@ type ListParams struct {
 	DeviceProfileID string
 	ApplicationID   string
 }
+
+type DeleteParams struct{}

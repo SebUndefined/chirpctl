@@ -52,10 +52,15 @@ func (c Context) Validate() error {
 	return nil
 }
 
+type UISettings struct {
+	Output string `yaml:"output"` // "table-styled"|"table"|"json"|"yaml"|"csv" default is table-styled
+}
+
 type File struct {
 	Version        int                `yaml:"version"`
 	DefaultContext string             `yaml:"defaultContext"`
 	Contexts       map[string]Context `yaml:"contexts"`
+	UI             *UISettings        `yaml:"ui"`
 }
 
 func Load() (*File, string, error) {

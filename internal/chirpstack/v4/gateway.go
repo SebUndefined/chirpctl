@@ -52,7 +52,7 @@ func (s *gatewaySvc) List(ctx context.Context, p svcgateway.ListParams) (svcgate
 			}),
 			Name:        item.Name,
 			Description: item.Description,
-			State:       item.State.String(),
+			State:       svcgateway.ParseStateFromInt32(int32(item.State)),
 			Properties:  item.Properties,
 			TenantID:    item.TenantId,
 		}
