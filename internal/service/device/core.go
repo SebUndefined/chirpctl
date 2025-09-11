@@ -23,16 +23,16 @@ type Status struct {
 
 // Device represent a Device
 type Device struct {
-	DevEUI          string
-	Name            string
-	Description     string
-	ApplicationID   string
-	DeviceProfileID string
-	SkipFcntCheck   bool
-	IsDisabled      bool
-	Variables       map[string]string
-	Tags            map[string]string
-	JoinEui         string
+	DevEUI          string            `json:"devEUI" yaml:"devEUI"`
+	Name            string            `json:"name" yaml:"name"`
+	Description     string            `json:"description" yaml:"description"`
+	ApplicationID   string            `json:"applicationID" yaml:"applicationID"`
+	DeviceProfileID string            `json:"deviceProfileID" yaml:"deviceProfileID"`
+	SkipFcntCheck   bool              `json:"skipFcntCheck" yaml:"skipFcntCheck"`
+	IsDisabled      bool              `json:"isDisabled" yaml:"isDisabled"`
+	Variables       map[string]string `json:"variables" yaml:"variables"`
+	Tags            map[string]string `json:"tags" yaml:"tags"`
+	JoinEui         string            `json:"joinEUI" yaml:"joinEUI"`
 }
 
 type CreateParams struct {
