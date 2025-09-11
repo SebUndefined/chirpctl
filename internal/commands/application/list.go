@@ -21,13 +21,6 @@ to quickly create a Cobra application.`,
 		Run: func(cmd *cobra.Command, args []string) {
 
 			fmt.Println("user list called")
-			fmt.Println(a.Factory.GetCurrentConfig())
-			fmt.Println(a.Factory.GetCurrentConfig())
-			fmt.Println(a.Factory.GetCurrentConfig())
-			fmt.Println(a.Factory.GetCurrentConfig())
-			fmt.Println(a.Cfg)
-			fmt.Println(a.Cfg)
-			fmt.Println(a.Cfg)
 		},
 	}
 	return userCmd

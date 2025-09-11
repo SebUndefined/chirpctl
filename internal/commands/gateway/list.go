@@ -45,7 +45,7 @@ func newListCommand(a *app.App) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			list, err := svc.List(context.Background(), listParams)
+			list, err := svc.List(cmd.Context(), listParams)
 			if err != nil {
 				return err
 			}
@@ -54,9 +54,9 @@ func newListCommand(a *app.App) *cobra.Command {
 
 			td := printing.TableData{
 				Headers: printing.Row{"Gateway ID", "Name", "State", "Created At", "Updated At", "Last seen", "Tenant ID"},
-				Rows:    make([]printing.Row, 0, len(list.Result)),
+				Rows:    make([]printing.Row, 0, len(list.Items)),
 			}
-			for _, d := range list.Result {
+			for _, d := range list.Items {
 				stateCol := printing.StatusDot(printing.DotGray)
 				switch d.State {
 				case gateway.StateOffline:

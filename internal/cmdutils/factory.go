@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sebundefined/chirpctl/internal/chirpstack/v4"
 	deviceV4 "github.com/sebundefined/chirpctl/internal/chirpstack/v4/device"
+	gateway2 "github.com/sebundefined/chirpctl/internal/chirpstack/v4/gateway"
 	"github.com/sebundefined/chirpctl/internal/service/device"
 	"github.com/sebundefined/chirpctl/internal/service/gateway"
 	"google.golang.org/grpc"
@@ -93,7 +93,7 @@ func (f *factory) Gateway() (gateway.Service, error) {
 			if err != nil {
 				return err
 			}
-			f.gw = v4.NewGatewayService(conn)
+			f.gw = gateway2.NewGatewayService(conn)
 		default:
 			return errors.New("transport non supporté pour Gateway")
 		}

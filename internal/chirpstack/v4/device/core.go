@@ -4,6 +4,7 @@ import (
 	"context"
 
 	apiv4 "github.com/chirpstack/chirpstack/api/go/v4/api"
+	"github.com/samber/lo"
 	"github.com/sebundefined/chirpctl/internal/service/device"
 	"github.com/sebundefined/chirpctl/internal/service/shared"
 	"google.golang.org/grpc"
@@ -50,8 +51,12 @@ func (s *core) List(ctx context.Context, p device.ListParams) (shared.ListResult
 			Description:       it.Description,
 			DeviceProfileID:   it.DeviceProfileId,
 			DeviceProfileName: it.DeviceProfileName,
-			DeviceStatus:      nil,
-			Tags:              it.Tags,
+			DeviceStatus: lo.Ternary(it.DeviceStatus != nil, &device.Status{
+				Margin:              it.DeviceStatus.Margin,
+				ExternalPowerSource: it.DeviceStatus.ExternalPowerSource,
+				BatteryLevel:        it.DeviceStatus.BatteryLevel,
+			}, nil),
+			Tags: it.Tags,
 		})
 	}
 	return out, nil

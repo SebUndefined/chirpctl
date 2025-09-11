@@ -15,6 +15,12 @@ type Core interface {
 	Delete(ctx context.Context, p DeleteParams) error
 }
 
+type Status struct {
+	Margin              int32
+	ExternalPowerSource bool
+	BatteryLevel        float32
+}
+
 // Device represent a Device
 type Device struct {
 	DevEUI          string
@@ -63,7 +69,7 @@ type ListItem struct {
 	Description       string
 	DeviceProfileID   string
 	DeviceProfileName string
-	DeviceStatus      *string
+	DeviceStatus      *Status
 	Tags              map[string]string
 }
 

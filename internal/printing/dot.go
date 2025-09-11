@@ -7,7 +7,7 @@ type DotColor string
 const (
 	DotGreen  DotColor = "green"
 	DotGray   DotColor = "gray"
-	DotYellow DotColor = "yellow" // “orange” approché
+	DotYellow DotColor = "yellow"
 	DotRed    DotColor = "red"
 	DotBlue   DotColor = "blue"
 )

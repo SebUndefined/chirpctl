@@ -83,10 +83,6 @@ func Resolve(cfg *config.File, flags *pflag.FlagSet, env map[string]string) Opti
 			contextName = v
 		}
 	}
-	fmt.Println(contextName)
-	fmt.Println(contextName)
-	fmt.Println(contextName)
-	fmt.Println(contextName)
 	if contextName == "" && cfg.DefaultContext != "" {
 		contextName = cfg.DefaultContext
 	}
