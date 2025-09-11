@@ -7,15 +7,14 @@ import (
 	"github.com/samber/lo"
 	"github.com/sebundefined/chirpctl/internal/service/device"
 	"github.com/sebundefined/chirpctl/internal/service/shared"
-	"google.golang.org/grpc"
 )
 
 type core struct {
 	c apiv4.DeviceServiceClient
 }
 
-func newCore(conn *grpc.ClientConn) *core {
-	return &core{c: apiv4.NewDeviceServiceClient(conn)}
+func newCore(svc apiv4.DeviceServiceClient) *core {
+	return &core{c: svc}
 }
 
 func (s *core) List(ctx context.Context, p device.ListParams) (shared.ListResult[device.ListItem], error) {

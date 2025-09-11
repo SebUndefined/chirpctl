@@ -8,7 +8,7 @@ import (
 	"github.com/sebundefined/chirpctl/internal/service/shared"
 )
 
-type Service interface {
+type Core interface {
 	Get(ctx context.Context, p GetParams) (*Gateway, error)
 	Create(ctx context.Context, p CreateParams) error
 	List(ctx context.Context, p ListParams) (shared.ListResult[ListItem], error)

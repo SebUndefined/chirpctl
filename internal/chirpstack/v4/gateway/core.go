@@ -4,18 +4,20 @@ import (
 	"context"
 
 	apiv4 "github.com/chirpstack/chirpstack/api/go/v4/api"
-	svcgateway "github.com/sebundefined/chirpctl/internal/service/gateway"
+	"github.com/sebundefined/chirpctl/internal/service/gateway"
 	"github.com/sebundefined/chirpctl/internal/service/shared"
 	"google.golang.org/grpc"
 )
 
 type core struct{ c apiv4.GatewayServiceClient }
 
-func NewGatewayService(conn *grpc.ClientConn) svcgateway.Service {
+var _ gateway.Core = (*core)(nil)
+
+func newCore(conn *grpc.ClientConn) *core {
 	return &core{c: apiv4.NewGatewayServiceClient(conn)}
 }
 
-func (s *core) List(ctx context.Context, p svcgateway.ListParams) (shared.ListResult[svcgateway.ListItem], error) {
+func (s *core) List(ctx context.Context, p gateway.ListParams) (shared.ListResult[gateway.ListItem], error) {
 	req := &apiv4.ListGatewaysRequest{
 		Limit:            p.GetSafeLimit(),
 		Offset:           p.Offset,
@@ -25,23 +27,23 @@ func (s *core) List(ctx context.Context, p svcgateway.ListParams) (shared.ListRe
 		OrderBy:          1,
 		OrderByDesc:      p.OrderByDesc,
 	}
-	out := shared.NewListResult[svcgateway.ListItem]()
+	out := shared.NewListResult[gateway.ListItem]()
 	resp, err := s.c.List(ctx, req)
 	if err != nil {
 		return out, err
 	}
 	items := resp.GetResult()
-	out = shared.NewListResultCap[svcgateway.ListItem](len(items))
+	out = shared.NewListResultCap[gateway.ListItem](len(items))
 	out.TotalCount = resp.GetTotalCount()
 	for _, item := range items {
-		out.Add(svcgateway.ListItem{
+		out.Add(gateway.ListItem{
 			GatewayID:   item.GatewayId,
 			CreatedAt:   shared.TsProtobufToPtrTime(item.CreatedAt),
 			UpdatedAt:   shared.TsProtobufToPtrTime(item.UpdatedAt),
 			LastSeenAt:  shared.TsProtobufToPtrTime(item.LastSeenAt),
 			Name:        item.Name,
 			Description: item.Description,
-			State:       svcgateway.ParseStateFromInt32(int32(item.State)),
+			State:       gateway.ParseStateFromInt32(int32(item.State)),
 			Properties:  item.Properties,
 			TenantID:    item.TenantId,
 		})
@@ -49,17 +51,17 @@ func (s *core) List(ctx context.Context, p svcgateway.ListParams) (shared.ListRe
 	return out, nil
 }
 
-func (s *core) Get(ctx context.Context, p svcgateway.GetParams) (*svcgateway.Gateway, error) {
+func (s *core) Get(ctx context.Context, p gateway.GetParams) (*gateway.Gateway, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s *core) Create(ctx context.Context, p svcgateway.CreateParams) error {
+func (s *core) Create(ctx context.Context, p gateway.CreateParams) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s *core) Delete(ctx context.Context, p svcgateway.DeleteParams) error {
+func (s *core) Delete(ctx context.Context, p gateway.DeleteParams) error {
 	_, err := s.c.Delete(ctx, &apiv4.DeleteGatewayRequest{
 		GatewayId: p.GatewayID,
 	})

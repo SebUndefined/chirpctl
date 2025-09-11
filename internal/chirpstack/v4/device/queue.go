@@ -3,10 +3,17 @@ package device
 import (
 	"context"
 
+	apiv4 "github.com/chirpstack/chirpstack/api/go/v4/api"
 	"github.com/sebundefined/chirpctl/internal/service/device"
 )
 
-type queue struct{}
+type queue struct {
+	c apiv4.DeviceServiceClient
+}
+
+func newQueue(c apiv4.DeviceServiceClient) *queue {
+	return &queue{c: c}
+}
 
 var _ device.Queue = (*queue)(nil)
 

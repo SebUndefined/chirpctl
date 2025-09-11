@@ -3,10 +3,16 @@ package device
 import (
 	"context"
 
+	apiv4 "github.com/chirpstack/chirpstack/api/go/v4/api"
 	"github.com/sebundefined/chirpctl/internal/service/device"
 )
 
 type keys struct {
+	c apiv4.DeviceServiceClient
+}
+
+func newKeys(c apiv4.DeviceServiceClient) *keys {
+	return &keys{c: c}
 }
 
 var _ device.Keys = (*keys)(nil)

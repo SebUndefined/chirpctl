@@ -10,7 +10,7 @@ import (
 	"time"
 
 	deviceV4 "github.com/sebundefined/chirpctl/internal/chirpstack/v4/device"
-	gateway2 "github.com/sebundefined/chirpctl/internal/chirpstack/v4/gateway"
+	gatewayV4 "github.com/sebundefined/chirpctl/internal/chirpstack/v4/gateway"
 	"github.com/sebundefined/chirpctl/internal/service/device"
 	"github.com/sebundefined/chirpctl/internal/service/gateway"
 	"google.golang.org/grpc"
@@ -20,7 +20,7 @@ import (
 
 type Factory interface {
 	Device() (device.Core, error)
-	Gateway() (gateway.Service, error)
+	Gateway() (gateway.Core, error)
 	Reconfigure(apply func(*ResolveConfig)) error
 	GetCurrentConfig() (ResolveConfig, error)
 	Close() error
@@ -38,7 +38,7 @@ type factory struct {
 	connOnce, devOnce, gwOnce onceErr
 	conn                      *grpc.ClientConn
 	dev                       device.Core
-	gw                        gateway.Service
+	gw                        gateway.Core
 }
 
 func NewFactory(cfg *ResolveConfig) Factory {
@@ -85,7 +85,7 @@ func (f *factory) Device() (device.Core, error) {
 	return f.dev, nil
 }
 
-func (f *factory) Gateway() (gateway.Service, error) {
+func (f *factory) Gateway() (gateway.Core, error) {
 	if err := f.gwOnce.do(func() error {
 		switch f.cfg.Transport {
 		case "grpc":
@@ -93,7 +93,7 @@ func (f *factory) Gateway() (gateway.Service, error) {
 			if err != nil {
 				return err
 			}
-			f.gw = gateway2.NewGatewayService(conn)
+			f.gw = gatewayV4.NewAdapter(conn)
 		default:
 			return errors.New("transport non supporté pour Gateway")
 		}

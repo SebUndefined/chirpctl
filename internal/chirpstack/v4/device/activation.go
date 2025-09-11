@@ -3,10 +3,19 @@ package device
 import (
 	"context"
 
+	apiv4 "github.com/chirpstack/chirpstack/api/go/v4/api"
 	"github.com/sebundefined/chirpctl/internal/service/device"
 )
 
-type activation struct{}
+type activation struct {
+	c apiv4.DeviceServiceClient
+}
+
+func newActivation(c apiv4.DeviceServiceClient) *activation {
+	return &activation{
+		c: c,
+	}
+}
 
 var _ device.Activation = (*activation)(nil)
 
