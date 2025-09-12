@@ -10,11 +10,11 @@ import (
 )
 
 type core struct {
-	c apiv4.DeviceServiceClient
+	client Client
 }
 
-func newCore(svc apiv4.DeviceServiceClient) *core {
-	return &core{c: svc}
+func newCore(client Client) *core {
+	return &core{client: client}
 }
 
 func (s *core) List(ctx context.Context, p device.ListParams) (shared.ListResult[device.ListItem], error) {
@@ -30,7 +30,7 @@ func (s *core) List(ctx context.Context, p device.ListParams) (shared.ListResult
 	}
 	out := shared.NewListResult[device.ListItem]()
 
-	resp, err := s.c.List(ctx, req)
+	resp, err := s.client.List(ctx, req)
 	if err != nil {
 		return out, err
 	}
@@ -62,7 +62,7 @@ func (s *core) List(ctx context.Context, p device.ListParams) (shared.ListResult
 }
 
 func (s *core) Get(ctx context.Context, p device.GetParams) (*device.Device, error) {
-	resp, err := s.c.Get(ctx, &apiv4.GetDeviceRequest{DevEui: p.DevEUI})
+	resp, err := s.client.Get(ctx, &apiv4.GetDeviceRequest{DevEui: p.DevEUI})
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (s *core) Create(ctx context.Context, p device.CreateParams) (string, error
 	if p.DeviceProfileID != nil {
 		req.Device.DeviceProfileID = *p.DeviceProfileID
 	}*/
-	_, err := s.c.Create(ctx, req)
+	_, err := s.client.Create(ctx, req)
 	return req.Device.DevEui, err
 }
 
@@ -128,7 +128,7 @@ func (s *core) Update(ctx context.Context, p device.UpdateParams) error {
 	if p.Patch.Tags != nil {
 		request.Device.Tags = shared.UpdateMap(p.Patch.Tags, device.Tags)
 	}
-	_, err = s.c.Update(ctx, &request)
+	_, err = s.client.Update(ctx, &request)
 	return err
 }
 

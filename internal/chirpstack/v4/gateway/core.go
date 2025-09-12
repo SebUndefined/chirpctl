@@ -6,15 +6,16 @@ import (
 	apiv4 "github.com/chirpstack/chirpstack/api/go/v4/api"
 	"github.com/sebundefined/chirpctl/internal/service/gateway"
 	"github.com/sebundefined/chirpctl/internal/service/shared"
-	"google.golang.org/grpc"
 )
 
-type core struct{ c apiv4.GatewayServiceClient }
+type core struct {
+	client Client
+}
 
 var _ gateway.Core = (*core)(nil)
 
-func newCore(conn *grpc.ClientConn) *core {
-	return &core{c: apiv4.NewGatewayServiceClient(conn)}
+func newCore(client Client) *core {
+	return &core{client: client}
 }
 
 func (s *core) List(ctx context.Context, p gateway.ListParams) (shared.ListResult[gateway.ListItem], error) {
@@ -28,7 +29,7 @@ func (s *core) List(ctx context.Context, p gateway.ListParams) (shared.ListResul
 		OrderByDesc:      p.OrderByDesc,
 	}
 	out := shared.NewListResult[gateway.ListItem]()
-	resp, err := s.c.List(ctx, req)
+	resp, err := s.client.List(ctx, req)
 	if err != nil {
 		return out, err
 	}
@@ -62,7 +63,7 @@ func (s *core) Create(ctx context.Context, p gateway.CreateParams) error {
 }
 
 func (s *core) Delete(ctx context.Context, p gateway.DeleteParams) error {
-	_, err := s.c.Delete(ctx, &apiv4.DeleteGatewayRequest{
+	_, err := s.client.Delete(ctx, &apiv4.DeleteGatewayRequest{
 		GatewayId: p.GatewayID,
 	})
 	return err

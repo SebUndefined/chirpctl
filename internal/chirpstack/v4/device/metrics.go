@@ -3,16 +3,15 @@ package device
 import (
 	"context"
 
-	apiv4 "github.com/chirpstack/chirpstack/api/go/v4/api"
 	"github.com/sebundefined/chirpctl/internal/service/device"
 )
 
 type metrics struct {
-	c apiv4.DeviceServiceClient
+	client Client
 }
 
-func newMetrics(c apiv4.DeviceServiceClient) *metrics {
-	return &metrics{c: c}
+func newMetrics(client Client) *metrics {
+	return &metrics{client: client}
 }
 
 var _ device.Metrics = (*metrics)(nil)

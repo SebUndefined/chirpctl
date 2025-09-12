@@ -18,13 +18,13 @@ type adapter struct {
 var _ device.API = (*adapter)(nil)
 
 func NewAdapter(conn *grpc.ClientConn) device.API {
-	svc := apiv4.NewDeviceServiceClient(conn)
+	client := NewWithClient(apiv4.NewDeviceServiceClient(conn))
 	return &adapter{
-		core:       newCore(svc),
-		keys:       newKeys(svc),
-		activation: newActivation(svc),
-		queue:      newQueue(svc),
-		metrics:    newMetrics(svc),
-		link:       newLink(svc),
+		core:       newCore(client),
+		keys:       newKeys(client),
+		activation: newActivation(client),
+		queue:      newQueue(client),
+		metrics:    newMetrics(client),
+		link:       newLink(client),
 	}
 }
