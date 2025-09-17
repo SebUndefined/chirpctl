@@ -77,34 +77,39 @@ func (s *core) Get(ctx context.Context, p device.GetParams) (*device.Device, err
 
 func (s *core) Create(ctx context.Context, p device.CreateParams) (string, error) {
 	req := &apiv4.CreateDeviceRequest{
-		Device: &apiv4.Device{DevEui: p.Device.DevEUI, ApplicationId: p.Device.ApplicationID},
+		Device: &apiv4.Device{
+			DevEui:          p.Device.DevEUI,
+			JoinEui:         p.Device.JoinEui,
+			Name:            p.Device.Name,
+			Description:     p.Device.Description,
+			ApplicationId:   p.Device.ApplicationID,
+			DeviceProfileId: p.Device.DeviceProfileID,
+			SkipFcntCheck:   p.Device.SkipFcntCheck,
+			IsDisabled:      p.Device.IsDisabled,
+			Variables:       p.Device.Variables,
+			Tags:            p.Device.Tags,
+		},
 	}
-	/*if p.Device.Name != nil {
-		req.Device.Name = *p.Device.Name
-	}
-	if p.DeviceProfileID != nil {
-		req.Device.DeviceProfileID = *p.DeviceProfileID
-	}*/
 	_, err := s.client.Create(ctx, req)
 	return req.Device.DevEui, err
 }
 
 func (s *core) Update(ctx context.Context, p device.UpdateParams) error {
-	device, err := s.Get(ctx, device.GetParams{DevEUI: p.DevEUI})
+	d, err := s.Get(ctx, device.GetParams{DevEUI: p.DevEUI})
 	if err != nil {
 		return err
 	}
 	request := apiv4.UpdateDeviceRequest{
 		Device: &apiv4.Device{
-			DevEui:          device.DevEUI,
-			Name:            device.Name,
-			Description:     device.Description,
-			ApplicationId:   device.ApplicationID,
-			DeviceProfileId: device.DeviceProfileID,
-			SkipFcntCheck:   device.SkipFcntCheck,
-			Variables:       device.Variables,
-			Tags:            device.Tags,
-			JoinEui:         device.JoinEui,
+			DevEui:          d.DevEUI,
+			Name:            d.Name,
+			Description:     d.Description,
+			ApplicationId:   d.ApplicationID,
+			DeviceProfileId: d.DeviceProfileID,
+			SkipFcntCheck:   d.SkipFcntCheck,
+			Variables:       d.Variables,
+			Tags:            d.Tags,
+			JoinEui:         d.JoinEui,
 		},
 	}
 	if p.Patch.Name != nil {
@@ -123,10 +128,10 @@ func (s *core) Update(ctx context.Context, p device.UpdateParams) error {
 		request.Device.SkipFcntCheck = *p.Patch.SkipFcntCheck
 	}
 	if p.Patch.Variables != nil {
-		request.Device.Variables = shared.UpdateMap(p.Patch.Variables, device.Variables)
+		request.Device.Variables = shared.UpdateMap(p.Patch.Variables, d.Variables)
 	}
 	if p.Patch.Tags != nil {
-		request.Device.Tags = shared.UpdateMap(p.Patch.Tags, device.Tags)
+		request.Device.Tags = shared.UpdateMap(p.Patch.Tags, d.Tags)
 	}
 	_, err = s.client.Update(ctx, &request)
 	return err

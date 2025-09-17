@@ -20,7 +20,7 @@ to quickly create a Cobra application.`,
 	userCmd.AddCommand(
 		NewListCommand(a),
 		NewGetCommand(a),
-		NewCreateCommand(),
+		NewCreateCommand(a),
 		NewUpdateCommand(),
 		NewDeleteCommand(),
 		NewImportCommand(a),

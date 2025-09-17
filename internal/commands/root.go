@@ -107,6 +107,12 @@ func NewRootCmd(a *app.App) *cobra.Command {
 			shared.Gateway: {shared.Gateway.String(), shared.List.String()},
 			//Gateway: gateway.NewGatewayGetCmd(a),
 		}),
+		// Create verb
+		NewVerbFirstRouter(shared.Create.String(), map[shared.Resource][]string{
+			shared.Device:  {shared.Device.String(), shared.Create.String()},
+			shared.Gateway: {shared.Gateway.String(), shared.List.String()},
+			//Gateway: gateway.NewGatewayGetCmd(a),
+		}),
 		application.NewApplicationCommand(a),
 		device.NewDeviceCommand(a),
 		gateway.NewGatewayCommand(a),
