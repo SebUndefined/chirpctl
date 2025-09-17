@@ -79,7 +79,7 @@ func (s *core) Create(ctx context.Context, p device.CreateParams) (string, error
 	req := &apiv4.CreateDeviceRequest{
 		Device: &apiv4.Device{
 			DevEui:          p.Device.DevEUI,
-			JoinEui:         p.Device.JoinEui,
+			JoinEui:         p.Device.JoinEUI,
 			Name:            p.Device.Name,
 			Description:     p.Device.Description,
 			ApplicationId:   p.Device.ApplicationID,
@@ -109,7 +109,7 @@ func (s *core) Update(ctx context.Context, p device.UpdateParams) error {
 			SkipFcntCheck:   d.SkipFcntCheck,
 			Variables:       d.Variables,
 			Tags:            d.Tags,
-			JoinEui:         d.JoinEui,
+			JoinEui:         d.JoinEUI,
 		},
 	}
 	if p.Patch.Name != nil {

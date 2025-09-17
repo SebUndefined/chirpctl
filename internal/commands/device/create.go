@@ -37,7 +37,7 @@ func NewCreateCommand(a *app.App) *cobra.Command {
 		"dev-eui", "", "Device EUI",
 	)
 	cmd.Flags().StringVar(
-		&paramsCreateDevice.Device.JoinEui,
+		&paramsCreateDevice.Device.JoinEUI,
 		"join-eui", "", "Join EUI",
 	)
 	cmd.Flags().StringVar(

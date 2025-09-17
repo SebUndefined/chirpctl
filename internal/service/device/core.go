@@ -32,7 +32,7 @@ type Device struct {
 	IsDisabled      bool              `json:"isDisabled" yaml:"isDisabled"`
 	Variables       map[string]string `json:"variables" yaml:"variables"`
 	Tags            map[string]string `json:"tags" yaml:"tags"`
-	JoinEui         string            `json:"joinEUI" yaml:"joinEUI"`
+	JoinEUI         string            `json:"joinEUI" yaml:"joinEUI"`
 }
 
 type CreateParams struct {
