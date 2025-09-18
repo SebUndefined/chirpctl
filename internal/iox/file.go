@@ -1,4 +1,4 @@
-package cmdutils
+package iox
 
 import (
 	"fmt"
@@ -9,14 +9,7 @@ import (
 	"github.com/sebundefined/chirpctl/utils"
 )
 
-// openReader ouvre un fichier ou retourne os.Stdin si file == "-".
-// La fonction retourne aussi un "closer" à appeler dans un defer.
-// Exemple :
-//
-//	r, closeFn, err := openReader(path)
-//	if err != nil { return err }
-//	defer closeFn()
-//	... utiliser r ...
+// OpenReader open a file
 func OpenReader(file string) (io.Reader, func() error, error) {
 	if file == "" || file == "-" {
 		// stdin
