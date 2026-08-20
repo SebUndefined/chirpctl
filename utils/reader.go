@@ -2,15 +2,14 @@ package utils
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/sebundefined/chirpctl/internal/validation"
 )
 
 func ReadOptionalBool(index int, row []string) (bool, bool, error) {
-	if index < 0 || index >= len(row) {
-		return false, false, fmt.Errorf("index %d out of range", index)
+	if index == -1 {
+		return false, false, nil
 	}
 	v := strings.TrimSpace(row[index])
 	if err := validation.ValidateBoolStrict(v); err != nil {

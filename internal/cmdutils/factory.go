@@ -19,7 +19,7 @@ import (
 )
 
 type Factory interface {
-	Device() (device.Core, error)
+	Device() (device.API, error)
 	Gateway() (gateway.Core, error)
 	Reconfigure(apply func(*ResolveConfig)) error
 	GetCurrentConfig() (ResolveConfig, error)
@@ -37,7 +37,7 @@ type factory struct {
 
 	connOnce, devOnce, gwOnce onceErr
 	conn                      *grpc.ClientConn
-	dev                       device.Core
+	dev                       device.API
 	gw                        gateway.Core
 }
 
@@ -66,7 +66,7 @@ func (f *factory) Reconfigure(apply func(*ResolveConfig)) error {
 	return nil
 }
 
-func (f *factory) Device() (device.Core, error) {
+func (f *factory) Device() (device.API, error) {
 	if err := f.devOnce.do(func() error {
 		switch f.cfg.Transport {
 		case "grpc":

@@ -3,6 +3,7 @@ package device
 import (
 	"context"
 
+	"github.com/chirpstack/chirpstack/api/go/v4/api"
 	"github.com/sebundefined/chirpctl/internal/service/device"
 )
 
@@ -37,6 +38,14 @@ func (k *keys) FlushDevNonces(ctx context.Context, p device.FlushDevNoncesParams
 }
 
 func (k *keys) CreateKeys(ctx context.Context, p device.CreateKeyParams) error {
-	//TODO implement me
-	panic("implement me")
+	req := api.CreateDeviceKeysRequest{
+		DeviceKeys: &api.DeviceKeys{
+			DevEui:    p.DevEui,
+			NwkKey:    p.NwkKey,
+			AppKey:    p.AppKey,
+			GenAppKey: p.GenAppKey,
+		},
+	}
+	_, err := k.client.CreateKeys(ctx, &req)
+	return err
 }

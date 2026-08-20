@@ -2,6 +2,7 @@ package device
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/sebundefined/chirpctl/internal/service/shared"
@@ -33,6 +34,11 @@ type Device struct {
 	Variables       map[string]string `json:"variables" yaml:"variables"`
 	Tags            map[string]string `json:"tags" yaml:"tags"`
 	JoinEUI         string            `json:"joinEUI" yaml:"joinEUI"`
+}
+
+func (d Device) String() string {
+	return fmt.Sprintf("name: %s, devEUI:%s, Description: %s, ApplicationID: %s, DeviceProfileID: %s, SkipFcntCheck: %t, IsDisabled: %t, Variables: %s, Tags: %s JoinEUI: %s",
+		d.Name, d.DevEUI, d.Description, d.DeviceProfileID, d.ApplicationID, d.SkipFcntCheck, d.IsDisabled, d.Variables, d.Tags, d.JoinEUI)
 }
 
 type CreateParams struct {

@@ -11,6 +11,7 @@ import (
 type Specs struct {
 	DevEUI, Name, Description, ApplicationID, DeviceProfileID, SkipFcntCheck int
 	IsDisabled, Variables, Tags, JoinEUI                                     int
+	AppKey, NwkKey, GenAppKey                                                int
 	maxUsedIdx                                                               int
 }
 
@@ -49,6 +50,12 @@ func (s *Specs) set(col string, value int) {
 		s.Tags = value
 	case "joinEUI":
 		s.JoinEUI = value
+	case "appKey":
+		s.AppKey = value
+	case "nwkKey":
+		s.NwkKey = value
+	case "genAppKey":
+		s.GenAppKey = value
 	}
 }
 
@@ -61,6 +68,9 @@ var requiredCols = []string{
 }
 var optionalCols = []string{
 	"skipFcntCheck",
+	"appKey",
+	"nwkKey",
+	"genAppKey",
 	"isDisabled",
 	"variables",
 	"tags",
@@ -87,59 +97,78 @@ func CompileDeviceCsvSpecs(idx csvx.ColumnIndex) (Specs, error) {
 	return specs, nil
 }
 
-func DecodeDeviceCsvSpecs(row []string, s Specs) (Device, error) {
+func DecodeDeviceImportCsvSpecs(row []string, s Specs) (ImportParams, error) {
 	if len(row) <= s.maxUsedIdx {
-		return Device{}, fmt.Errorf("invalid row length %d, expected at least %d", len(row), s.maxUsedIdx+1)
+		return ImportParams{}, fmt.Errorf("invalid row length %d, expected at least %d", len(row), s.maxUsedIdx+1)
 	}
-	d := Device{
-		Description: row[s.Description],
+	d := ImportParams{
+		Device: Device{
+			Description: row[s.Description],
+		},
 	}
 	if err := validation.ValidateHexLen(row[s.DevEUI], 8); err != nil {
-		return Device{}, fmt.Errorf("invalid devEUI: %w", err)
+		return ImportParams{}, fmt.Errorf("invalid devEUI: %w", err)
 	} else {
-		d.DevEUI = row[s.DevEUI]
+		d.Device.DevEUI = row[s.DevEUI]
 	}
 	if err := validation.NotEmptyString(row[s.Name]); err != nil {
-		return Device{}, fmt.Errorf("invalid name %s: %w", row[s.Name], err)
+		return ImportParams{}, fmt.Errorf("invalid name %s: %w", row[s.Name], err)
 	} else {
-		d.Name = row[s.Name]
+		d.Device.Name = row[s.Name]
 	}
 	if err := validation.ValidateUUID(row[s.ApplicationID]); err != nil {
-		return Device{}, fmt.Errorf("invalid applicationID: %w", err)
+		return ImportParams{}, fmt.Errorf("invalid applicationID: %w", err)
 	} else {
-		d.ApplicationID = row[s.ApplicationID]
+		d.Device.ApplicationID = row[s.ApplicationID]
 	}
 	if err := validation.ValidateUUID(row[s.DeviceProfileID]); err != nil {
-		return Device{}, fmt.Errorf("invalid DeviceProfileID: %w", err)
+		return ImportParams{}, fmt.Errorf("invalid DeviceProfileID: %w", err)
 	} else {
-		d.DeviceProfileID = row[s.DeviceProfileID]
+		d.Device.DeviceProfileID = row[s.DeviceProfileID]
 	}
 	if v, exist, err := utils.ReadOptionalBool(s.SkipFcntCheck, row); err != nil {
-		return Device{}, fmt.Errorf("invalid SkipFcntCheck: %w", err)
+		return ImportParams{}, fmt.Errorf("invalid SkipFcntCheck: %w", err)
 	} else if exist {
-		d.SkipFcntCheck = v
+		d.Device.SkipFcntCheck = v
 	}
 	if v, exist, err := utils.ReadOptionalBool(s.IsDisabled, row); err != nil {
-		return Device{}, fmt.Errorf("invalid IsDisabled: %w", err)
+		return ImportParams{}, fmt.Errorf("invalid IsDisabled: %w", err)
 	} else if exist {
-		d.IsDisabled = v
+		d.Device.IsDisabled = v
 	}
 	if v, exist, err := utils.ReadOptionalMap(s.Variables, row); err != nil {
-		return Device{}, fmt.Errorf("invalid Variables: %w", err)
+		return ImportParams{}, fmt.Errorf("invalid Variables: %w", err)
 	} else if exist {
-		d.Variables = v
+		d.Device.Variables = v
 	}
 	if v, exist, err := utils.ReadOptionalMap(s.Tags, row); err != nil {
-		return Device{}, fmt.Errorf("invalid Tags: %w", err)
+		return ImportParams{}, fmt.Errorf("invalid Tags: %w", err)
 	} else if exist {
-		d.Tags = v
+		d.Device.Tags = v
 	}
 	if s.JoinEUI != -1 {
 		if err := validation.ValidateHexLen(row[s.JoinEUI], 8); err != nil {
-			return Device{}, fmt.Errorf("invalid JoinEUI: %w", err)
+			return ImportParams{}, fmt.Errorf("invalid JoinEUI: %w", err)
 		} else {
-			d.JoinEUI = row[s.JoinEUI]
+			d.Device.JoinEUI = row[s.JoinEUI]
 		}
+	}
+	// Key
+	if s.AppKey != -1 || s.NwkKey != -1 || s.GenAppKey != -1 {
+		keys := CreateKeyParams{
+			DevEui: d.Device.DevEUI,
+		}
+		if s.AppKey != -1 {
+			keys.AppKey = row[s.AppKey]
+			keys.NwkKey = row[s.AppKey]
+		}
+		if s.NwkKey != -1 {
+			keys.NwkKey = row[s.NwkKey]
+		}
+		if s.GenAppKey != -1 {
+			keys.GenAppKey = row[s.GenAppKey]
+		}
+		d.Keys = &keys
 	}
 
 	return d, nil

@@ -10,7 +10,12 @@ type Keys interface {
 	FlushDevNonces(ctx context.Context, p FlushDevNoncesParams) error
 }
 
-type CreateKeyParams struct{}
+type CreateKeyParams struct {
+	DevEui    string
+	NwkKey    string
+	AppKey    string
+	GenAppKey string
+}
 
 type KeysModel struct{}
 
