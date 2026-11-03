@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
-	"github.com/samber/do/v2"
 )
 
 type Config struct {
@@ -14,13 +13,6 @@ type Config struct {
 }
 type ConcreteLogger struct {
 	logger *zerolog.Logger
-}
-
-func ProvideService(i do.Injector) (Interface, error) {
-	return NewLoggerWithConfig(Config{
-		Level:  LevelDebug,
-		Format: "",
-	}), nil
 }
 
 func NewLoggerWithConfig(cfg Config) Interface {
