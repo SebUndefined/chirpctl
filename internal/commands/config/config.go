@@ -21,7 +21,7 @@ import (
 func newCurrentContextCommand(a *app.App) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "current-context",
-		Short: "A brief description of your command",
+		Short: "Show the current context",
 		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfgFile, err := a.CfgSvc.Get(cmd.Context())
@@ -31,11 +31,22 @@ func newCurrentContextCommand(a *app.App) *cobra.Command {
 			if cfgFile == nil {
 				cfgFile = &config.File{Version: 1, Contexts: map[string]config.Context{}}
 			}
+			var defaultContext *config.Context
+			if len(strings.TrimSpace(cfgFile.DefaultContext)) > 0 {
+				for name, context := range cfgFile.Contexts {
+					if name != cfgFile.DefaultContext {
+						continue
+					}
+					defaultContext = &context
+				}
+			}
+			if defaultContext == nil {
+
+			}
 			tw := table.NewWriter()
 			tw.SetOutputMirror(os.Stdout)
 			tw.SetStyle(table.StyleLight)
 			tw.AppendHeader(table.Row{"Current", "Name", "API Version", "Address", "Insecure"})
-
 			for name, ctx := range cfgFile.Contexts {
 				isCurrent := cfgFile.DefaultContext == name
 
