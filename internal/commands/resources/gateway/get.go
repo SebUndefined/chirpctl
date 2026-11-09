@@ -5,6 +5,7 @@ import (
 
 	"github.com/sebundefined/chirpctl/internal/app"
 	"github.com/sebundefined/chirpctl/internal/commands/cmdutils"
+	"github.com/sebundefined/chirpctl/internal/printing"
 	"github.com/sebundefined/chirpctl/internal/service/gateway"
 	"github.com/sebundefined/chirpctl/internal/validation"
 	"github.com/spf13/cobra"
@@ -98,5 +99,7 @@ func listGateways(cmd *cobra.Command, a *app.App, params gateway.ListParams) err
 		return fmt.Errorf("list gateways: %w", err)
 	}
 
-	return a.Printer.Print(result, buildGatewayListTable(result.Items))
+	return a.Printer.Print(result, buildGatewayListTable(result.Items,
+		a.Printer.Format() == printing.FormatTableStyled,
+		a.Printer.UseColor()))
 }

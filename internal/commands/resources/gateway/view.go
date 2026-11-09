@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"fmt"
 	"maps"
 	"slices"
 	"strings"
@@ -11,7 +10,7 @@ import (
 )
 
 // buildGatewayListTable builds a table from gateway list items.
-func buildGatewayListTable(items []gateway.ListItem) printing.TableData {
+func buildGatewayListTable(items []gateway.ListItem, styled bool, useColor bool) printing.TableData {
 	td := printing.TableData{
 		Headers: printing.Row{
 			"Gateway ID", "Name", "State",
@@ -22,28 +21,37 @@ func buildGatewayListTable(items []gateway.ListItem) printing.TableData {
 	}
 
 	for _, item := range items {
-		// Reuse the StateOnline / StateOffline / StateNeverSeen
-		// switch from your existing listGateways implementation.
 		state := "UNKNOWN"
-		dot := printing.StatusDot(printing.DotGray)
+		dotColor := printing.DotGray
 
 		switch item.State {
 		case gateway.StateOnline:
 			state = "ONLINE"
-			dot = printing.StatusDot(printing.DotGreen)
+			dotColor = printing.DotGreen
 
 		case gateway.StateOffline:
 			state = "OFFLINE"
-			dot = printing.StatusDot(printing.DotRed)
+			dotColor = printing.DotRed
 
 		case gateway.StateNeverSeen:
 			state = "NEVER_SEEN"
 		}
 
+		// Decorate states only in styled table output.
+		if styled {
+			dot := "●"
+
+			if useColor {
+				dot = printing.StatusDot(dotColor)
+			}
+
+			state = dot + " " + state
+		}
+
 		td.Rows = append(td.Rows, printing.Row{
 			item.GatewayID,
 			item.Name,
-			fmt.Sprintf("%s %s", dot, state),
+			state,
 			printing.FormatTime(item.CreatedAt, ""),
 			printing.FormatTime(item.UpdatedAt, ""),
 			printing.FormatTime(item.LastSeenAt, ""),

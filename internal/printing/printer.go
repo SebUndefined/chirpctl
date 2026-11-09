@@ -31,6 +31,15 @@ func NewPrinter(out io.Writer, opts Options) *Printer {
 	}
 }
 
+func (p *Printer) Format() Format {
+	return p.opts.Format
+}
+
+// UseColor reports whether colored output is enabled.
+func (p *Printer) UseColor() bool {
+	return p.opts.Format == FormatTableStyled && !p.opts.NoColor
+}
+
 // Print renders structured data or its tabular representation.
 func (p *Printer) Print(data any, td TableData) error {
 	var err error
