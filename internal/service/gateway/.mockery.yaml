@@ -1,0 +1,11 @@
+---
+template: testify
+dir: mocks
+pkgname: svcgatewaymocks
+filename: "mock_gateway_{{.InterfaceName | snakecase}}.go"
+structname: "{{.InterfaceName}}Mock"
+packages:
+  github.com/sebundefined/chirpctl/internal/service/gateway:
+    interfaces:
+      API:
+
