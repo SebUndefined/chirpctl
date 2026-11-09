@@ -1,129 +1,113 @@
 package commands
 
 import (
+	"fmt"
+	"log/slog"
 	"strings"
-	"time"
 
 	"github.com/sebundefined/chirpctl/internal/app"
+	"github.com/sebundefined/chirpctl/internal/build"
 	"github.com/sebundefined/chirpctl/internal/cmdutils"
-	"github.com/sebundefined/chirpctl/internal/commands/application"
 	"github.com/sebundefined/chirpctl/internal/commands/config"
-	"github.com/sebundefined/chirpctl/internal/commands/device"
-	"github.com/sebundefined/chirpctl/internal/commands/gateway"
-	"github.com/sebundefined/chirpctl/internal/commands/shared"
+	"github.com/sebundefined/chirpctl/internal/commands/verbs"
 	"github.com/sebundefined/chirpctl/internal/options"
+	"github.com/sebundefined/chirpctl/internal/printing"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
-type RootOptions struct {
-	Context    string
-	Addr       string
-	Insecure   bool
-	CACert     string
-	ServerName string
-	Token      string
-	Timeout    time.Duration
-	Output     string
-	Verbose    bool
-	ApiVersion string // "v4"
-	Transport  string // "grpc" | "rest" | "graphql"
-}
-
 func NewRootCmd(a *app.App) *cobra.Command {
-	override := &a.Overrides
+	override := &a.OverrideOptions
 
 	cmd := &cobra.Command{
+		Version: build.Version,
+		Long: fmt.Sprintf(
+			"CLI admin for Chirpstack.\n\nVersion: %s\nBuild date: %s",
+			build.Version,
+			build.Date,
+		),
 		Use:   "chirpctl",
 		Short: "CLI ChipStark (gRPC)",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			// 1) Les commandes `chipctl config ...` n’ont pas besoin de config chargée
+			// Configuration commands do not require the remote runtime.
 			if isConfigCommand(cmd) {
 				return nil
 			}
-			// fusionner flags persistents et locaux du root
-			merged := pflag.NewFlagSet("all", pflag.ContinueOnError)
-			merged.AddFlagSet(cmd.InheritedFlags())
-			merged.AddFlagSet(cmd.Flags())
+
+			// Load the configuration file.
 			file, err := a.CfgSvc.Get(cmd.Context())
 			if err != nil {
 				return err
 			}
 			a.Cfg = file
-			// resolve = profil YAML -> env -> flags
-			res := options.Resolve(a.Cfg, merged, nil)
 
+			// Resolve settings: YAML -> environment -> CLI flags.
+			resolved := options.Resolve(a.Cfg, cmd.Flags(), nil)
+			a.ResolvedOptions = resolved
+			// Validate the requested output format.
+			format, err := printing.ParseFormat(resolved.Output)
+			if err != nil {
+				return err
+			}
+
+			// Configure the output renderer.
+			a.Printer = printing.NewPrinter(
+				cmd.OutOrStdout(),
+				printing.Options{
+					Format: format,
+				},
+			)
+			// Configure the logging level.
+			level := slog.LevelWarn
+			if resolved.Verbose {
+				level = slog.LevelDebug
+			}
+
+			// Write diagnostic logs to stderr.
+			handler := slog.NewTextHandler(
+				cmd.ErrOrStderr(),
+				&slog.HandlerOptions{Level: level},
+			)
+			a.Logger = slog.New(handler)
+			a.Logger.Debug(
+				"ChirpStack connection configuration",
+				"context", resolved.Context,
+				"address", resolved.Addr,
+				"api_version", resolved.ApiVersion,
+				"tls_enabled", !resolved.Insecure,
+				"token_configured", strings.TrimSpace(resolved.Token) != "",
+			)
+			// Keep your existing factory initialization here.
 			// re-créer la factory
 			if a.Factory != nil {
 				_ = a.Factory.Close()
 				a.Factory = nil
 			}
+			a.Logger.Debug("Runtime configuration resolved", "context", resolved.Context, "api_version", resolved.ApiVersion)
 			a.Factory = cmdutils.NewFactory(&cmdutils.ResolveConfig{
-				Addr:       res.Addr,
-				Insecure:   res.Insecure,
-				CACert:     res.CACert,
-				ServerName: res.ServerName,
-				Token:      res.Token,
-				ApiVersion: strings.TrimPrefix(res.ApiVersion, "v"),
+				Addr:       resolved.Addr,
+				Insecure:   resolved.Insecure,
+				CACert:     resolved.CACert,
+				ServerName: resolved.ServerName,
+				Token:      resolved.Token,
+				ApiVersion: strings.TrimPrefix(resolved.ApiVersion, "v"),
 				Transport:  "grpc",
-				Timeout:    res.Timeout,
+				Timeout:    resolved.Timeout,
 			})
-			if f := cmd.InheritedFlags().Lookup("output"); f != nil && !f.Changed {
-				if a.Cfg != nil && a.Cfg.UI != nil && a.Cfg.UI.Output != "" {
-					a.Overrides.Output = a.Cfg.UI.Output
-				}
-			}
 			return nil
 		},
 	}
-
-	cmd.PersistentFlags().StringVar(&override.Context, "context", "", "Context to user")
-	cmd.PersistentFlags().StringVar(&override.Addr, "addr", "", "gRPC address (host:port)")
-	cmd.PersistentFlags().BoolVar(&override.Insecure, "insecure", false, "Disabled TLS certificate verification")
-	cmd.PersistentFlags().StringVar(&override.ApiVersion, "api-version", "v4", "Set the API version")
-	cmd.PersistentFlags().StringVar(&override.CACert, "cacert", "", "Path to CA certificate")
-	cmd.PersistentFlags().StringVar(&override.ServerName, "server-name", "", "SNI / TLS name")
-	cmd.PersistentFlags().StringVar(&override.Token, "token", "", "API token (Bearer)")
-	cmd.PersistentFlags().DurationVar(&override.Timeout, "timeout", 10*time.Second, "Command timeout")
-	cmd.PersistentFlags().StringVarP(&override.Output, "output", "o", "table-styled", "table-styled|table|json|yaml|csv")
-	cmd.PersistentFlags().BoolVarP(&override.Verbose, "verbose", "v", false, "Verbose logs")
+	cmd.SetVersionTemplate(
+		fmt.Sprintf("chirpctl version %s (built %s)\n", build.Version, build.Date),
+	)
+	registerRootFlags(cmd, override)
 
 	cmd.AddCommand(
 		config.NewConfigCommand(a),
-		// Get verb
-		NewVerbFirstRouter(shared.Get.String(), map[shared.Resource][]string{
-			shared.Device: {shared.Device.String(), shared.Get.String()},
-			//Gateway: gateway.NewGatewayGetCmd(a),
-		}),
-		// List verb
-		NewVerbFirstRouter(shared.List.String(), map[shared.Resource][]string{
-			shared.Device:  {shared.Device.String(), shared.List.String()},
-			shared.Gateway: {shared.Gateway.String(), shared.List.String()},
-			//Gateway: gateway.NewGatewayGetCmd(a),
-		}),
-		// Import verb
-		NewVerbFirstRouter(shared.Import.String(), map[shared.Resource][]string{
-			shared.Device:  {shared.Device.String(), shared.Import.String()},
-			shared.Gateway: {shared.Gateway.String(), shared.List.String()},
-			//Gateway: gateway.NewGatewayGetCmd(a),
-		}),
-		// Create verb
-		NewVerbFirstRouter(shared.Create.String(), map[shared.Resource][]string{
-			shared.Device:  {shared.Device.String(), shared.Create.String()},
-			shared.Gateway: {shared.Gateway.String(), shared.List.String()},
-			//Gateway: gateway.NewGatewayGetCmd(a),
-		}),
-		application.NewApplicationCommand(a),
-		device.NewDeviceCommand(a),
-		gateway.NewGatewayCommand(a),
-		/*deviceprofile.NewDeviceProfileCommand(),
-		deviceprofiletemplate.NewDeviceProfileTemplateCommand(),
-		,
-		multicast.NewMulticastCommand(),
-		relay.NewRelayCommand(),
-		tenant.NewTenantCommand(),
-		user.NewUserCommand(),
-		configCmd.NewConfigCommand(),*/
+		verbs.NewGetCommand(a),
+		verbs.NewCreateCommand(a),
+		/*verbs.NewUpdateCommand(a),
+		verbs.NewDeleteCommand(a),
+		verbs.NewImportCommand(a),*/
 	)
 
 	return cmd

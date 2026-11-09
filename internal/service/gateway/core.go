@@ -46,16 +46,18 @@ func ParseStateFromInt32(s int32) State {
 
 // Gateway represent a Gateway
 type Gateway struct {
-	GatewayID       string
-	Name            string
-	Description     string
-	ApplicationID   string
-	DeviceProfileID string
-	SkipFcntCheck   bool
-	IsDisabled      bool
-	Variables       map[string]string
-	Tags            map[string]string
-	JoinEui         string
+	GatewayID        string            `json:"gatewayID" yaml:"gatewayID"`
+	CreatedAt        *time.Time        `json:"createdAt" yaml:"createdAt"`
+	UpdatedAt        *time.Time        `json:"updatedAt" yaml:"updatedAt"`
+	LastSeenAt       *time.Time        `json:"lastSeenAt" yaml:"lastSeenAt"`
+	Name             string            `json:"name" yaml:"name"`
+	Description      string            `json:"description" yaml:"description"`
+	Location         *shared.Location  `json:"location,omitempty" yaml:"location,omitempty"`
+	TenantID         string            `json:"tenantID" yaml:"tenantID"`
+	Tags             map[string]string `json:"tags" yaml:"tags"`
+	Metadata         map[string]string `json:"metadata" yaml:"metadata"`
+	StatsInterval    uint32            `json:"statsInterval" yaml:"statsInterval"`
+	DownlinkPriority uint32            `json:"downlinkPriority" yaml:"downlinkPriority"`
 }
 
 type CreateParams struct {
@@ -63,19 +65,21 @@ type CreateParams struct {
 }
 
 type GetParams struct {
-	DevEUI string
+	GatewayID string
 }
 
 type ListItem struct {
-	GatewayID   string
-	CreatedAt   *time.Time
-	UpdatedAt   *time.Time
-	LastSeenAt  *time.Time
-	Name        string
-	Description string
-	State       State
-	Properties  map[string]string
-	TenantID    string
+	GatewayID        string            `json:"gatewayID" yaml:"gatewayID"`
+	CreatedAt        *time.Time        `json:"createdAt" yaml:"createdAt"`
+	UpdatedAt        *time.Time        `json:"updatedAt" yaml:"updatedAt"`
+	LastSeenAt       *time.Time        `json:"lastSeenAt" yaml:"lastSeenAt"`
+	Name             string            `json:"name" yaml:"name"`
+	Description      string            `json:"description" yaml:"description"`
+	Location         *shared.Location  `json:"location,omitempty" yaml:"location,omitempty"`
+	State            State             `json:"state" yaml:"state"`
+	Metadata         map[string]string `json:"metadata" yaml:"metadata"`
+	DownlinkPriority uint32            `json:"downlinkPriority" yaml:"downlinkPriority"`
+	TenantID         string            `json:"tenantID" yaml:"tenantID"`
 }
 
 type ListResult struct {

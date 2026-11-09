@@ -1,12 +1,7 @@
 package device
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/samber/lo"
 	"github.com/sebundefined/chirpctl/internal/app"
-	"github.com/sebundefined/chirpctl/internal/printing"
 	"github.com/sebundefined/chirpctl/internal/service/device"
 	"github.com/spf13/cobra"
 )
@@ -18,7 +13,7 @@ func NewListCommand(a *app.App) *cobra.Command {
 		Short: "List the devices",
 		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			svc, err := a.Factory.Device()
+			/*svc, err := a.Factory.Device()
 			if err != nil {
 				return err
 			}
@@ -28,7 +23,7 @@ func NewListCommand(a *app.App) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			format := printing.ParseFormat(a.Overrides.Output) // vient du flag/config
+			format := printing.ParseFormat(a.OverrideOptions.Output) // vient du flag/config
 			noColor := os.Getenv("CHIRPCTL_NO_COLOR") != ""
 
 			td := printing.TableData{
@@ -47,7 +42,8 @@ func NewListCommand(a *app.App) *cobra.Command {
 					d.DeviceProfileName,
 				})
 			}
-			return printing.RenderList(format, td, list, noColor)
+			return printing.RenderList(format, td, list, noColor)*/
+			return nil
 		},
 	}
 	cmd.Flags().StringVarP(&listOptions.ApplicationID, "app-id", "a", "", "Application UUID")

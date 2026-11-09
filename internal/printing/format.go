@@ -1,6 +1,7 @@
 package printing
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 )
@@ -40,19 +41,23 @@ func (enum Format) IsValid() bool {
 	return false
 }
 
-func ParseFormat(s string) Format {
-	s = strings.ToUpper(strings.TrimSpace(s))
-	switch s {
+func ParseFormat(value string) (Format, error) {
+	normalized := strings.ToUpper(
+		strings.ReplaceAll(strings.TrimSpace(value), "-", "_"),
+	)
+	switch normalized {
 	case string(FormatTable):
-		return FormatTable
+		return FormatTable, nil
 	case string(FormatJSON):
-		return FormatJSON
+		return FormatJSON, nil
 	case string(FormatYAML):
-		return FormatYAML
+		return FormatYAML, nil
 	case string(FormatCSV):
-		return FormatCSV
+		return FormatCSV, nil
+	case string(FormatTableStyled):
+		return FormatTableStyled, nil
 	default:
-		return FormatTableStyled
+		return FormatUnknown, fmt.Errorf("unsupported output format %q", value)
 	}
 
 }

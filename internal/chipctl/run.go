@@ -2,14 +2,10 @@ package chipctl
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sebundefined/chirpctl/internal/app"
-	"github.com/sebundefined/chirpctl/internal/build"
 	"github.com/sebundefined/chirpctl/internal/commands"
-	"github.com/sebundefined/chirpctl/internal/options"
 	"github.com/sebundefined/chirpctl/internal/service/config/fsimpl"
-	"github.com/sebundefined/chirpctl/utils"
 )
 
 type ExitCode int
@@ -23,56 +19,13 @@ const (
 )
 
 func Run() ExitCode {
-	buildDate := build.Date
-	buildVersion := build.Version
-	hasDebug := utils.IsDevModeEnabled()
-	fmt.Println("Chirspack CLI Version:", buildVersion)
-	fmt.Println("Chirspack CLI Build Date:", buildDate)
-	fmt.Println("Chirspack CLI has debug:", hasDebug)
-
 	a := &app.App{
 		CfgSvc: fsimpl.New(),
-		Overrides: options.Options{
-			// valeurs par défaut des flags (root les exposera)
-			Output:     "table",
-			ApiVersion: "v4",
-			Timeout:    10_000_000_000, // 10s
-		},
 	}
 	rootCmd := commands.NewRootCmd(a)
-	//ctx := context.Background()
-	//cmd := commands.NewRootCmd(cfg)
-	//cmdFactory := cmdutils.NewFactory()
 	err := rootCmd.ExecuteContext(context.Background())
 	if err != nil {
 		return exitError
 	}
 	return exitOK
 }
-
-/*func Run() int {
-	// Si tu veux un contexte racine custom (cancel sur SIGINT, etc.)
-	ctx := context.Background()
-	l := logger.NewLoggerWithConfig(logger.Config{
-		Level:  logger.LevelDebug,
-		Format: "console",
-	})
-	l.Debug("Starting chipctlapp")
-	// 1) config + resolve
-	cfg, _, err := config.Load()
-	if err != nil {
-		return 1
-	}
-
-	cmd := commands.NewRootCmd(cfg)
-	//AttachRuntime(cmd, l)
-	if _, err := cmd.ExecuteContextC(ctx); err != nil {
-		// mapping propre des codes de sortie
-		if errors.Is(err, context.Canceled) {
-			return 130 // Ctrl-C
-		}
-		fmt.Fprintln(os.Stderr, err)
-		return 1
-	}
-	return 0
-}*/

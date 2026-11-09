@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"fmt"
 
 	apiv4 "github.com/chirpstack/chirpstack/api/go/v4/api"
 	"github.com/sebundefined/chirpctl/internal/service/gateway"
@@ -37,24 +38,24 @@ func (s *core) List(ctx context.Context, p gateway.ListParams) (shared.ListResul
 	out = shared.NewListResultCap[gateway.ListItem](len(items))
 	out.TotalCount = resp.GetTotalCount()
 	for _, item := range items {
-		out.Add(gateway.ListItem{
-			GatewayID:   item.GatewayId,
-			CreatedAt:   shared.TsProtobufToPtrTime(item.CreatedAt),
-			UpdatedAt:   shared.TsProtobufToPtrTime(item.UpdatedAt),
-			LastSeenAt:  shared.TsProtobufToPtrTime(item.LastSeenAt),
-			Name:        item.Name,
-			Description: item.Description,
-			State:       gateway.ParseStateFromInt32(int32(item.State)),
-			Properties:  item.Properties,
-			TenantID:    item.TenantId,
-		})
+		converted, err := toGatewayListItem(item)
+		if err != nil {
+			return out, fmt.Errorf("convert gateway list item: %w", err)
+		}
+		out.Add(converted)
 	}
 	return out, nil
 }
 
 func (s *core) Get(ctx context.Context, p gateway.GetParams) (*gateway.Gateway, error) {
-	//TODO implement me
-	panic("implement me")
+	req := &apiv4.GetGatewayRequest{
+		GatewayId: p.GatewayID,
+	}
+	get, err := s.client.Get(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return toGateway(get)
 }
 
 func (s *core) Create(ctx context.Context, p gateway.CreateParams) error {

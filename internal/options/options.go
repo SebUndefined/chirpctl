@@ -20,6 +20,7 @@ type Options struct {
 	CACert     string        `json:"caCert"`
 	ServerName string        `json:"serverName"`
 	Token      string        `json:"token"`
+	TenantID   string        `json:"tenantID"`
 	Timeout    time.Duration `json:"timeout"`
 	Output     string        `json:"output"`
 	Verbose    bool          `json:"verbose"`
@@ -92,6 +93,8 @@ func Resolve(cfg *config.File, flags *pflag.FlagSet, env map[string]string) Opti
 		o.Insecure = p.Insecure
 		o.CACert = p.CACert
 		o.ServerName = p.ServerName
+		// Apply the default tenant from the selected context.
+		o.TenantID = p.TenantID
 		o.Token = p.Token
 		if p.Timeout != "" {
 			if d, err := time.ParseDuration(p.Timeout); err == nil {
@@ -102,7 +105,10 @@ func Resolve(cfg *config.File, flags *pflag.FlagSet, env map[string]string) Opti
 			o.ApiVersion = strings.ToLower(p.ApiVersion)
 		}
 	}
-
+	// Apply the output format from the configuration file.
+	if cfg.UI != nil && cfg.UI.Output != "" {
+		o.Output = strings.ToLower(cfg.UI.Output)
+	}
 	// --- 2) Overrides ENV ---
 	if v, ok := getEnv("CHIPCTL_ADDR"); ok {
 		o.Addr = v
@@ -130,6 +136,10 @@ func Resolve(cfg *config.File, flags *pflag.FlagSet, env map[string]string) Opti
 	}
 	if v, ok := getEnv("CHIPCTL_API_VERSION"); ok {
 		o.ApiVersion = strings.ToLower(v)
+	}
+	// Override the default tenant using an environment variable.
+	if value, ok := getEnv("CHIPCTL_TENANT_ID"); ok {
+		o.TenantID = value
 	}
 
 	// --- 3) Overrides FLAGS ---
@@ -166,7 +176,7 @@ func Resolve(cfg *config.File, flags *pflag.FlagSet, env map[string]string) Opti
 
 	// --- 4) Defaults & normalisation ---
 	if o.Output == "" {
-		o.Output = "table"
+		o.Output = "table-styled"
 	}
 	if o.Timeout <= 0 {
 		o.Timeout = 10 * time.Second
