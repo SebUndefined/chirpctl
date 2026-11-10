@@ -15,5 +15,5 @@ func TestBearerCredentialsMetadata(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "Bearer test-token", md["authorization"])
-	assert.Equal(t, "chipctl-1", md["user-agent"])
+	assert.Equal(t, "chirpctl-1", md["user-agent"])
 }

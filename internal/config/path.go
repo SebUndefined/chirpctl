@@ -20,14 +20,14 @@ func Dir() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return filepath.Join(home, "Library", "Application Support", "chipctl"), nil
+		return filepath.Join(home, "Library", "Application Support", "chirpctl"), nil
 	default:
 		if d := os.Getenv("XDG_CONFIG_HOME"); d != "" {
-			return filepath.Join(d, "chipctl"), nil
+			return filepath.Join(d, "chirpctl"), nil
 		}
 		home, _ := os.UserHomeDir()
 		if home != "" {
-			return filepath.Join(home, ".config", "chipctl"), nil
+			return filepath.Join(home, ".config", "chirpctl"), nil
 		}
 	}
 	return "", errors.New("unable to determine the home directory")

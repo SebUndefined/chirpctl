@@ -1,4 +1,4 @@
-package chipctl
+package chirpctl
 
 import (
 	"context"

@@ -41,7 +41,7 @@ func Dial(ctx context.Context, o options.Options) (*grpc.ClientConn, func() erro
 		if o.Token != "" {
 			md.Append("authorization", "Bearer "+o.Token)
 		}
-		md.Append("user-agent", "chipctl/1")
+		md.Append("user-agent", "chirpctl/1")
 		return invoker(metadata.NewOutgoingContext(ctx, md), method, req, reply, cc, callOpts...)
 	})
 	opts = append(opts, unary)

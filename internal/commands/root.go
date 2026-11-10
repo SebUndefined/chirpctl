@@ -28,10 +28,6 @@ func NewRootCmd(a *app.App) *cobra.Command {
 		Use:   "chirpctl",
 		Short: "CLI ChipStark (gRPC)",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-			// Configuration commands do not require the remote runtime.
-			if isConfigCommand(cmd) {
-				return nil
-			}
 
 			// Load the configuration file.
 			file, err := a.CfgSvc.Get(cmd.Context())
@@ -56,6 +52,7 @@ func NewRootCmd(a *app.App) *cobra.Command {
 					Format: format,
 				},
 			)
+
 			// Configure the logging level.
 			level := slog.LevelWarn
 			if resolved.Verbose {
@@ -76,6 +73,10 @@ func NewRootCmd(a *app.App) *cobra.Command {
 				"tls_enabled", !resolved.Insecure,
 				"token_configured", strings.TrimSpace(resolved.Token) != "",
 			)
+			// Configuration commands do not require the remote runtime.
+			if isConfigCommand(cmd) {
+				return nil
+			}
 			// Keep your existing factory initialization here.
 			// re-créer la factory
 			if a.Factory != nil {

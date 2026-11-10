@@ -8,14 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/jedib0t/go-pretty/v6/text"
-	"github.com/samber/lo"
 	"github.com/sebundefined/chirpctl/internal/app"
 	"github.com/sebundefined/chirpctl/internal/commands/cmdutils"
 	"github.com/sebundefined/chirpctl/internal/config"
+	"github.com/sebundefined/chirpctl/internal/printing"
 	configWizard "github.com/sebundefined/chirpctl/internal/tui/config"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 func newCurrentContextCommand(a *app.App) *cobra.Command {
@@ -24,68 +23,25 @@ func newCurrentContextCommand(a *app.App) *cobra.Command {
 		Short: "Show the current context",
 		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfgFile, err := a.CfgSvc.Get(cmd.Context())
-			if err != nil && !errors.Is(err, os.ErrNotExist) {
-				return err
-			}
-			if cfgFile == nil {
-				cfgFile = &config.File{Version: 1, Contexts: map[string]config.Context{}}
-			}
-			var defaultContext *config.Context
-			if len(strings.TrimSpace(cfgFile.DefaultContext)) > 0 {
-				for name, context := range cfgFile.Contexts {
-					if name != cfgFile.DefaultContext {
-						continue
-					}
-					defaultContext = &context
-				}
-			}
-			if defaultContext == nil {
-
-			}
-			tw := table.NewWriter()
-			tw.SetOutputMirror(os.Stdout)
-			tw.SetStyle(table.StyleLight)
-			tw.AppendHeader(table.Row{"Current", "Name", "API Version", "Address", "Insecure"})
-			for name, ctx := range cfgFile.Contexts {
-				isCurrent := cfgFile.DefaultContext == name
-
-				currentCol := ""
-				displayName := name
-				addr := ctx.Addr
-				insecure := lo.Ternary(ctx.Insecure, "Insecure", "Secure")
-
-				if isCurrent {
-					currentCol = text.FgGreen.Sprint("●") // petit point vert discret
-					displayName = text.Bold.Sprint(displayName)
-				} else {
-					addr = text.FgHiBlack.Sprint(addr) // adresse « grisée » quand non courant
-				}
-				if ctx.Insecure {
-					insecure = text.FgHiYellow.Sprint(insecure)
-				} else {
-					insecure = text.FgHiGreen.Sprint(insecure)
-				}
-				tw.AppendRow(table.Row{
-					currentCol,
-					displayName,
-					ctx.ApiVersion,
-					addr,
-					insecure,
-				})
+			name, ctx, err := a.CfgSvc.CurrentProfile(cmd.Context())
+			if err != nil {
+				return fmt.Errorf("get current context: %w", err)
 			}
 
-			if len(cfgFile.Contexts) == 0 {
-				tw.AppendRow(table.Row{
-					text.FgHiBlack.Sprint("—"),
-					text.FgHiBlack.Sprint("—"),
-					text.FgHiBlack.Sprint("—"),
-					text.FgHiBlack.Sprint("—"),
-				})
+			view := ContextView{
+				Name:       name,
+				Current:    true,
+				APIVersion: ctx.ApiVersion,
+				Address:    ctx.Addr,
+				TenantID:   ctx.TenantID,
+				TLS:        !ctx.Insecure,
+				HasToken:   ctx.Token != "",
 			}
 
-			tw.Render()
-			return nil
+			return a.Printer.Print(
+				view,
+				buildCurrentContextTable(view),
+			)
 		},
 	}
 
@@ -102,53 +58,16 @@ func newGetContextsCommand(a *app.App) *cobra.Command {
 			if err != nil && !errors.Is(err, os.ErrNotExist) {
 				return err
 			}
-			if cfgFile == nil {
-				cfgFile = &config.File{Version: 1, Contexts: map[string]config.Context{}}
-			}
-			tw := table.NewWriter()
-			tw.SetOutputMirror(os.Stdout)
-			tw.SetStyle(table.StyleLight)
-			tw.AppendHeader(table.Row{"Current", "Name", "API Version", "Address", "Insecure"})
 
-			for name, ctx := range cfgFile.Contexts {
-				isCurrent := cfgFile.DefaultContext == name
+			views := buildContextViews(cfgFile)
 
-				currentCol := ""
-				displayName := name
-				addr := ctx.Addr
-				insecure := lo.Ternary(ctx.Insecure, "Insecure", "Secure")
+			td := buildContextsTable(
+				views,
+				a.Printer.Format() == printing.FormatTableStyled,
+				a.Printer.UseColor(),
+			)
 
-				if isCurrent {
-					currentCol = text.FgGreen.Sprint("●") // petit point vert discret
-					displayName = text.Bold.Sprint(displayName)
-				} else {
-					addr = text.FgHiBlack.Sprint(addr) // adresse « grisée » quand non courant
-				}
-				if ctx.Insecure {
-					insecure = text.FgHiYellow.Sprint(insecure)
-				} else {
-					insecure = text.FgHiGreen.Sprint(insecure)
-				}
-				tw.AppendRow(table.Row{
-					currentCol,
-					displayName,
-					ctx.ApiVersion,
-					addr,
-					insecure,
-				})
-			}
-
-			if len(cfgFile.Contexts) == 0 {
-				tw.AppendRow(table.Row{
-					text.FgHiBlack.Sprint("—"),
-					text.FgHiBlack.Sprint("—"),
-					text.FgHiBlack.Sprint("—"),
-					text.FgHiBlack.Sprint("—"),
-				})
-			}
-
-			tw.Render()
-			return nil
+			return a.Printer.Print(views, td)
 		},
 	}
 
@@ -160,20 +79,16 @@ func newDeleteContextsCommand(a *app.App) *cobra.Command {
 		Use:   "delete-context",
 		Short: "A brief description of your command",
 		Long:  ``,
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			/*ctx := cmd.Context()
-			svc := configctx.From(ctx)
-			name, prof, err := svc.CurrentProfile(ctx)
-			if err != nil {
+			name := args[0]
+
+			if _, err := a.CfgSvc.DeleteProfile(cmd.Context(), name); err != nil {
 				return err
 			}
 
-			p := tea.NewProgram(NewProfileView(name, prof))
-			res, err := p.RunNewContextWizard()
+			_, err := fmt.Fprintf(cmd.OutOrStdout(), "Context %q deleted\n", name)
 			return err
-			a.CfgSvc.Init(cmd.Context())
-			fmt.Println(a.Cfg)*/
-			return nil
 		},
 	}
 
@@ -192,6 +107,9 @@ func newSetContextCommand(a *app.App) *cobra.Command {
 			}
 			if cfgFile == nil {
 				cfgFile = &config.File{Version: 1, Contexts: map[string]config.Context{}}
+			}
+			if cfgFile.Contexts == nil {
+				cfgFile.Contexts = make(map[string]config.Context)
 			}
 			contextName, _ := cmd.Flags().GetString("context")
 			if contextName == "" {
@@ -212,6 +130,7 @@ func newSetContextCommand(a *app.App) *cobra.Command {
 				}
 			})
 			cmdutils.SetIfString(cmd, "token", func(v string) { ctx.Token = v })
+			cmdutils.SetIfString(cmd, "tenant-id", func(v string) { ctx.TenantID = v })
 			cmdutils.SetIfDuration(cmd, "timeout", func(d time.Duration) { ctx.Timeout = d.String() })
 			cmdutils.SetIfString(cmd, "api-version", func(v string) { ctx.ApiVersion = v })
 			if errValidation := ctx.Validate(); errValidation != nil {
@@ -222,25 +141,19 @@ func newSetContextCommand(a *app.App) *cobra.Command {
 			if len(strings.TrimSpace(cfgFile.DefaultContext)) == 0 {
 				cfgFile.DefaultContext = contextName
 			}
-			if err := config.Save(cfgFile); err != nil {
-				return err
+			if existed {
+				_, err = a.CfgSvc.UpdateProfile(cmd.Context(), contextName, ctx)
+			} else {
+				_, err = a.CfgSvc.CreateProfile(cmd.Context(), contextName, ctx)
 			}
 
-			if err := config.Save(cfgFile); err != nil {
+			if err != nil {
 				return err
-			}
-			if !existed {
-				fmt.Printf("context %q created\n", contextName)
-			} else {
-				fmt.Printf("context %q updated\n", contextName)
-			}
-			if cfgFile.DefaultContext == contextName {
-				fmt.Printf("default context: %s\n", contextName)
 			}
 			return nil
 		},
 	}
-
+	cmd.Flags().String("tenant-id", "", "Default tenant UUID for this context")
 	return cmd
 }
 
@@ -250,6 +163,12 @@ func newInitConfigCommand(a *app.App) *cobra.Command {
 		Short: "Init the profile",
 		Long:  `Guide you into the steps for creating a new profile.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if !term.IsTerminal(int(os.Stdin.Fd())) ||
+				!term.IsTerminal(int(os.Stdout.Fd())) {
+				return errors.New(
+					"config init requires an interactive terminal; use config set-context for automation",
+				)
+			}
 			get, err := a.CfgSvc.Get(cmd.Context())
 			if err != nil && !errors.Is(err, os.ErrNotExist) {
 				return err
@@ -262,7 +181,7 @@ func newInitConfigCommand(a *app.App) *cobra.Command {
 				return err
 			}
 
-			init, err := a.CfgSvc.Init(cmd.Context(), config.File{
+			_, err = a.CfgSvc.Init(cmd.Context(), config.File{
 				Version:        1,
 				DefaultContext: res.Name,
 				Contexts: map[string]config.Context{
@@ -275,15 +194,13 @@ func newInitConfigCommand(a *app.App) *cobra.Command {
 						Timeout:    res.Timeout,
 						MTls:       config.MTls{},
 						ApiVersion: res.ApiVersion,
+						TenantID:   res.TenantID,
 					},
 				},
 			})
 			if err != nil {
 				return err
 			}
-			fmt.Println(res)
-			fmt.Println(get)
-			fmt.Println(init)
 			return nil
 		},
 	}

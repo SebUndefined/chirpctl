@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sebundefined/chirpctl/internal/validation"
 	"gopkg.in/yaml.v3"
 )
 
@@ -50,6 +51,17 @@ func (c Context) Validate() error {
 			return errors.New("mTLS enabled but client-cert or client-key missing")
 		}
 	}
+	if c.TenantID != "" {
+		if err := validation.ValidateUUID(c.TenantID); err != nil {
+			return fmt.Errorf("invalid tenantID: %w", err)
+		}
+	}
+	if c.Timeout != "" {
+		timeout, err := time.ParseDuration(c.Timeout)
+		if err != nil || timeout <= 0 {
+			return fmt.Errorf("invalid timeout %q", c.Timeout)
+		}
+	}
 	return nil
 }
 
@@ -62,6 +74,27 @@ type File struct {
 	DefaultContext string             `yaml:"defaultContext"`
 	Contexts       map[string]Context `yaml:"contexts"`
 	UI             *UISettings        `yaml:"ui"`
+}
+
+func (f File) Validate() error {
+	if f.Version == 0 || f.Version > 1 {
+		return errors.New("version is invalid")
+	}
+	if f.DefaultContext != "" {
+		if _, ok := f.Contexts[f.DefaultContext]; !ok {
+			return errors.New("default context not found")
+		}
+	}
+	for name, ctx := range f.Contexts {
+		if len(strings.TrimSpace(name)) == 0 {
+			return errors.New("context name is required")
+		}
+		err := ctx.Validate()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func Load() (*File, string, error) {
