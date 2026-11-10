@@ -17,14 +17,17 @@ type Core interface {
 }
 
 type Status struct {
-	Margin              int32
-	ExternalPowerSource bool
-	BatteryLevel        float32
+	Margin              int32   `json:"margin" yaml:"margin"`
+	ExternalPowerSource bool    `json:"externalPowerSource" yaml:"externalPowerSource"`
+	BatteryLevel        float32 `json:"batteryLevel" yaml:"batteryLevel"`
 }
 
 // Device represent a Device
 type Device struct {
 	DevEUI          string            `json:"devEUI" yaml:"devEUI"`
+	CreatedAt       *time.Time        `json:"createdAt" yaml:"createdAt"`
+	UpdatedAt       *time.Time        `json:"updatedAt" yaml:"updatedAt"`
+	LastSeenAt      *time.Time        `json:"lastSeenAt" yaml:"lastSeenAt"`
 	Name            string            `json:"name" yaml:"name"`
 	Description     string            `json:"description" yaml:"description"`
 	ApplicationID   string            `json:"applicationID" yaml:"applicationID"`
@@ -67,16 +70,16 @@ type GetParams struct {
 }
 
 type ListItem struct {
-	DevEUI            string
-	CreatedAt         *time.Time
-	UpdatedAt         *time.Time
-	LastSeenAt        *time.Time
-	Name              string
-	Description       string
-	DeviceProfileID   string
-	DeviceProfileName string
-	DeviceStatus      *Status
-	Tags              map[string]string
+	DevEUI            string            `json:"devEUI" yaml:"devEUI"`
+	CreatedAt         *time.Time        `json:"createdAt" yaml:"createdAt"`
+	UpdatedAt         *time.Time        `json:"updatedAt" yaml:"updatedAt"`
+	LastSeenAt        *time.Time        `json:"lastSeenAt" yaml:"lastSeenAt"`
+	Name              string            `json:"name" yaml:"name"`
+	Description       string            `json:"description" yaml:"description"`
+	DeviceProfileID   string            `json:"deviceProfileID" yaml:"deviceProfileID"`
+	DeviceProfileName string            `json:"deviceProfileName" yaml:"deviceProfileName"`
+	DeviceStatus      *Status           `json:"deviceStatus" yaml:"deviceStatus"`
+	Tags              map[string]string `json:"tags" yaml:"tags"`
 }
 
 type ListParams struct {

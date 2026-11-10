@@ -2,9 +2,9 @@ package device
 
 import (
 	"context"
+	"fmt"
 
 	apiv4 "github.com/chirpstack/chirpstack/api/go/v4/api"
-	"github.com/samber/lo"
 	"github.com/sebundefined/chirpctl/internal/service/device"
 	"github.com/sebundefined/chirpctl/internal/service/shared"
 )
@@ -40,23 +40,12 @@ func (s *core) List(ctx context.Context, p device.ListParams) (shared.ListResult
 	out = shared.NewListResultCap[device.ListItem](len(items))
 
 	out.TotalCount = resp.GetTotalCount()
-	for _, it := range items {
-		out.Add(device.ListItem{
-			DevEUI:            it.DevEui,
-			CreatedAt:         shared.TsProtobufToPtrTime(it.CreatedAt),
-			UpdatedAt:         shared.TsProtobufToPtrTime(it.UpdatedAt),
-			LastSeenAt:        shared.TsProtobufToPtrTime(it.LastSeenAt),
-			Name:              it.Name,
-			Description:       it.Description,
-			DeviceProfileID:   it.DeviceProfileId,
-			DeviceProfileName: it.DeviceProfileName,
-			DeviceStatus: lo.Ternary(it.DeviceStatus != nil, &device.Status{
-				Margin:              it.DeviceStatus.Margin,
-				ExternalPowerSource: it.DeviceStatus.ExternalPowerSource,
-				BatteryLevel:        it.DeviceStatus.BatteryLevel,
-			}, nil),
-			Tags: it.Tags,
-		})
+	for _, item := range items {
+		converted, err := toDeviceListItem(item)
+		if err != nil {
+			return out, fmt.Errorf("convert gateway list item: %w", err)
+		}
+		out.Add(converted)
 	}
 	return out, nil
 }
@@ -66,13 +55,7 @@ func (s *core) Get(ctx context.Context, p device.GetParams) (*device.Device, err
 	if err != nil {
 		return nil, err
 	}
-	d := resp.GetDevice()
-	return &device.Device{
-		DevEUI:          d.GetDevEui(),
-		Name:            d.GetName(),
-		ApplicationID:   d.GetApplicationId(),
-		DeviceProfileID: d.GetDeviceProfileId(),
-	}, nil
+	return toDevice(resp)
 }
 
 func (s *core) Create(ctx context.Context, p device.CreateParams) (string, error) {
