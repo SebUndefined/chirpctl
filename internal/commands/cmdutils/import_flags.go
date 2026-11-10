@@ -16,13 +16,13 @@ const (
 )
 
 func ParseFileFormat(s string) FileFormat {
-	switch s {
-	case string(FileFormatJSON):
-		return FileFormatJSON
-	case string(FileFormatYAML):
-		return FileFormatYAML
-	case string(FileFormatCsv):
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "csv":
 		return FileFormatCsv
+	case "json":
+		return FileFormatJSON
+	case "yaml", "yml":
+		return FileFormatYAML
 	default:
 		return FileFormatUnknown
 	}
@@ -46,13 +46,34 @@ type ImportOptions struct {
 }
 
 func AttachImportFlags(cmd *cobra.Command, opts *ImportOptions) {
-	cmd.Flags().StringVar(&opts.File, "file", "", "The file to import.")
-	cmd.Flags().StringVar(&opts.Format, "format", "csv", "The format to use for importing.")
-	cmd.Flags().BoolVar(&opts.DryRun, "dry-run", false, "Whether or not to actually import the files.")
-	cmd.Flags().BoolVar(&opts.UpSert, "upsert", false, "Whether or not to upsert the files.")
-	cmd.Flags().Int32Var(&opts.Batch, "batch", 100, "Size of each import to import.")
-	cmd.Flags().BoolVar(&opts.SkipHeader, "skip-header", false, "Skip first line of CSV (header)")
-	cmd.Flags().StringVar(&opts.CsvDelimiter, "csv-delim", ";", "Delimiter to use for CSV delimiter.")
+	cmd.Flags().StringVar(
+		&opts.File, "file", "",
+		"Input file path (- for stdin)",
+	)
+	cmd.Flags().StringVar(
+		&opts.Format, "format", "csv",
+		"Input format: csv (JSON and YAML planned)",
+	)
+	cmd.Flags().BoolVar(
+		&opts.DryRun, "dry-run", false,
+		"Validate the input without creating resources",
+	)
+	cmd.Flags().BoolVar(
+		&opts.UpSert, "upsert", false,
+		"Update existing resources (not yet implemented)",
+	)
+	cmd.Flags().Int32Var(
+		&opts.Batch, "batch", 100,
+		"Batch size (not yet implemented)",
+	)
+	cmd.Flags().BoolVar(
+		&opts.SkipHeader, "skip-header", false,
+		"Skip the CSV header (unsupported for devices)",
+	)
+	cmd.Flags().StringVar(
+		&opts.CsvDelimiter, "csv-delim", ";",
+		"CSV field delimiter",
+	)
 }
 
 type ExportFlags struct {

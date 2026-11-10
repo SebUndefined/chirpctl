@@ -108,6 +108,7 @@ func NewRootCmd(a *app.App) *cobra.Command {
 		config.NewConfigCommand(a),
 		verbs.NewGetCommand(a),
 		verbs.NewCreateCommand(a),
+		verbs.NewImportCommand(a),
 		/*verbs.NewUpdateCommand(a),
 		verbs.NewDeleteCommand(a),
 		verbs.NewImportCommand(a),*/

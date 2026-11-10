@@ -38,9 +38,21 @@ func OpenReader(file string) (io.Reader, func() error, error) {
 	return f, f.Close, nil
 }
 
+type WriterOption func(*writerOptions)
+
+type writerOptions struct {
+	noClobber bool
+}
+
+func WithNoClobber() WriterOption {
+	return func(o *writerOptions) {
+		o.noClobber = true
+	}
+}
+
 // OpenWriter ouvre un fichier en écriture ou retourne os.Stdout si file == "-".
 // Retourne aussi un closer pour être defer.
-func OpenWriter(file string) (io.Writer, func() error, error) {
+func OpenWriter(file string, opts ...WriterOption) (io.Writer, func() error, error) {
 	if file == "" || file == "-" {
 		return os.Stdout, func() error { return nil }, nil
 	}
@@ -57,9 +69,21 @@ func OpenWriter(file string) (io.Writer, func() error, error) {
 		}
 		p = filepath.Join(root, p)
 	}
-	f, err := os.Create(p)
-	if err != nil {
-		return nil, nil, err
+	cfg := writerOptions{}
+	for _, opt := range opts {
+		opt(&cfg)
 	}
+
+	flags := os.O_CREATE | os.O_WRONLY | os.O_TRUNC
+
+	if cfg.noClobber {
+		flags = os.O_CREATE | os.O_EXCL | os.O_WRONLY
+	}
+
+	f, err := os.OpenFile(p, flags, 0600)
+	if err != nil {
+		return nil, nil, fmt.Errorf("open output %q: %w", p, err)
+	}
+
 	return f, f.Close, nil
 }
