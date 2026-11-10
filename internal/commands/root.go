@@ -83,7 +83,7 @@ func NewRootCmd(a *app.App) *cobra.Command {
 				a.Factory = nil
 			}
 			a.Logger.Debug("Runtime configuration resolved", "context", resolved.Context, "api_version", resolved.ApiVersion)
-			a.Factory = clientfactory.NewFactory(&clientfactory.ResolveConfig{
+			a.Factory, err = clientfactory.NewFactory(&clientfactory.ResolveConfig{
 				Addr:       resolved.Addr,
 				Insecure:   resolved.Insecure,
 				CACert:     resolved.CACert,
@@ -93,6 +93,9 @@ func NewRootCmd(a *app.App) *cobra.Command {
 				Transport:  "grpc",
 				Timeout:    resolved.Timeout,
 			})
+			if err != nil {
+				return fmt.Errorf("initialize ChirpStack client factory: %w", err)
+			}
 			return nil
 		},
 	}

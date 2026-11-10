@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"strings"
@@ -41,19 +42,50 @@ type factory struct {
 	gw                        gateway.API
 }
 
-func NewFactory(cfg *ResolveConfig) Factory {
+func NewFactory(cfg *ResolveConfig) (Factory, error) {
+	if cfg == nil {
+		return nil, errors.New("factory configuration is nil")
+	}
+
 	c := *cfg
+
 	if c.Timeout == 0 {
 		c.Timeout = 15 * time.Second
 	}
-	if c.Transport == "" {
-		if c.ApiVersion == "v4" {
-			c.Transport = "grpc"
-		} else {
-			c.Transport = "rest"
+
+	version := APIVersion(
+		strings.TrimPrefix(
+			strings.ToLower(strings.TrimSpace(c.ApiVersion)),
+			"v",
+		),
+	)
+
+	transport := Transport(strings.ToLower(strings.TrimSpace(c.Transport)))
+
+	switch version {
+	case APIVersionV4:
+		if transport == "" {
+			transport = TransportGRPC
 		}
+
+		if transport != TransportGRPC {
+			return nil, fmt.Errorf(
+				"unsupported transport %q for ChirpStack v4",
+				transport,
+			)
+		}
+
+	default:
+		return nil, fmt.Errorf(
+			"unsupported ChirpStack API version %q",
+			c.ApiVersion,
+		)
 	}
-	return &factory{cfg: c}
+
+	c.ApiVersion = string(version)
+	c.Transport = string(transport)
+
+	return &factory{cfg: c}, nil
 }
 
 func (f *factory) Reconfigure(apply func(*ResolveConfig)) error {
@@ -127,23 +159,6 @@ func (f *factory) grpcConn() (*grpc.ClientConn, error) {
 			}
 			dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsCfg)))
 		}
-		/*unary := grpc.WithUnaryInterceptor(func(
-			ctx context.Context,
-			method string,
-			req, reply interface{},
-			cc *grpc.ClientConn,
-			invoker grpc.UnaryInvoker,
-			callOpts ...grpc.CallOption,
-		) error {
-			md := metadata.New(nil)
-			if f.cfg.Token != "" {
-				md.Append("authorization", "Bearer "+f.cfg.Token)
-			}
-			md.Append("user-agent", "chipctl/1")
-			return invoker(metadata.NewOutgoingContext(ctx, md), method, req, reply, cc, callOpts...)
-		})*/
-		// Auth sur toutes les RPC
-		//dialOpts = append(dialOpts, unary)
 		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(bearerCreds{
 			token:    strings.TrimSpace(f.cfg.Token),
 			insecure: f.cfg.Insecure,
