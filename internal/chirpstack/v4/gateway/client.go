@@ -36,7 +36,9 @@ type Client interface {
 	DeleteRelayGateway(ctx context.Context, in *apiv4.DeleteRelayGatewayRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
-type grpcGatewayAPI struct{ c apiv4.GatewayServiceClient }
+type grpcGatewayAPI struct {
+	c apiv4.GatewayServiceClient
+}
 
 var _ Client = (*grpcGatewayAPI)(nil)
 

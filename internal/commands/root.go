@@ -7,7 +7,7 @@ import (
 
 	"github.com/sebundefined/chirpctl/internal/app"
 	"github.com/sebundefined/chirpctl/internal/build"
-	"github.com/sebundefined/chirpctl/internal/cmdutils"
+	"github.com/sebundefined/chirpctl/internal/chirpstack/clientfactory"
 	"github.com/sebundefined/chirpctl/internal/commands/config"
 	"github.com/sebundefined/chirpctl/internal/commands/verbs"
 	"github.com/sebundefined/chirpctl/internal/options"
@@ -83,7 +83,7 @@ func NewRootCmd(a *app.App) *cobra.Command {
 				a.Factory = nil
 			}
 			a.Logger.Debug("Runtime configuration resolved", "context", resolved.Context, "api_version", resolved.ApiVersion)
-			a.Factory = cmdutils.NewFactory(&cmdutils.ResolveConfig{
+			a.Factory = clientfactory.NewFactory(&clientfactory.ResolveConfig{
 				Addr:       resolved.Addr,
 				Insecure:   resolved.Insecure,
 				CACert:     resolved.CACert,

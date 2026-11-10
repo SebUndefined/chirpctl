@@ -3,7 +3,7 @@ package app
 import (
 	"log/slog"
 
-	"github.com/sebundefined/chirpctl/internal/cmdutils"
+	"github.com/sebundefined/chirpctl/internal/chirpstack/clientfactory"
 	"github.com/sebundefined/chirpctl/internal/config"
 	"github.com/sebundefined/chirpctl/internal/options"
 	"github.com/sebundefined/chirpctl/internal/printing"
@@ -17,6 +17,6 @@ type App struct {
 	CfgSvc          configSvc.Service
 	ResolvedOptions options.Options
 	OverrideOptions options.Options
-	Factory         cmdutils.Factory
+	Factory         clientfactory.Factory
 	Printer         *printing.Printer
 }

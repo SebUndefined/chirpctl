@@ -1,0 +1,11 @@
+---
+template: testify
+dir: "{{.InterfaceDir}}/mocks"
+pkgname: clientfactorymocks
+filename: "mock_clientfactory_{{.InterfaceName | snakecase}}.go"
+structname: "{{.InterfaceName}}Mock"
+packages:
+  github.com/sebundefined/chirpctl/internal/chirpstack/clientfactory:
+    interfaces:
+      Factory:
+

@@ -19,6 +19,10 @@ var _ gateway.API = (*adapter)(nil)
 func NewAdapter(conn *grpc.ClientConn) gateway.API {
 	client := NewWithClient(apiv4.NewGatewayServiceClient(conn))
 	return &adapter{
-		core: newCore(client),
+		core:      newCore(client),
+		relay:     newRelay(client),
+		cert:      newCert(client),
+		dutyCycle: newDutyCycle(client),
+		metrics:   newMetrics(client),
 	}
 }

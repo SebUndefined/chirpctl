@@ -7,9 +7,15 @@ import (
 	"github.com/sebundefined/chirpctl/internal/service/shared"
 )
 
-type relay struct{}
+type relay struct {
+	client Client
+}
 
 var _ gateway.Relay = (*relay)(nil)
+
+func newRelay(client Client) *relay {
+	return &relay{client: client}
+}
 
 func (r *relay) GetRelayGateway(ctx context.Context, in gateway.GetRelayGatewayParams) (gateway.GetRelayGatewayResult, error) {
 	//TODO implement me

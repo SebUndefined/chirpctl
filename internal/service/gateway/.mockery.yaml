@@ -1,6 +1,6 @@
 ---
 template: testify
-dir: mocks
+dir: "{{.InterfaceDir}}/mocks"
 pkgname: svcgatewaymocks
 filename: "mock_gateway_{{.InterfaceName | snakecase}}.go"
 structname: "{{.InterfaceName}}Mock"

@@ -1,17 +1,11 @@
-all: false
-dir: 'servicetest'
-filename: '{{.InterfaceName}}_mock.go'
-force-file-write: true
-formatter: goimports
-include-auto-generated: false
-log-level: info
-structname: '{{.Mock}}{{.InterfaceName}}'
-pkgname: '{{.SrcPackageName}}'
-recursive: false
-require-template-schema-exists: true
 template: testify
-template-schema: '{{.Template}}.schema.json'
+dir: "{{.InterfaceDir}}/mocks"
+pkgname: multicastgrpmocks
+filename: "mock_multicastgrp_{{.InterfaceName | snakecase}}.go"
+structname: "{{.InterfaceName}}Mock"
+force-file-write: true
+
 packages:
   github.com/sebundefined/chirpctl/internal/chirpstack/v4/multicastgrp:
-    config:
-      all: true
+    interfaces:
+      Client:

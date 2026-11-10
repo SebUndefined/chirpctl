@@ -7,7 +7,13 @@ import (
 	"github.com/sebundefined/chirpctl/internal/service/shared"
 )
 
-type metrics struct{}
+type metrics struct {
+	client Client
+}
+
+func newMetrics(client Client) *metrics {
+	return &metrics{client: client}
+}
 
 var _ shared.Metrics[gateway.GetGatewayMetricsParams, gateway.GetGatewayMetricsResult] = (*metrics)(nil)
 
