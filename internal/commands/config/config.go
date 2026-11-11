@@ -51,7 +51,7 @@ func newCurrentContextCommand(a *app.App) *cobra.Command {
 func newGetContextsCommand(a *app.App) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "get-contexts",
-		Short: "A brief description of your command",
+		Short: "Get all contexts",
 		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfgFile, err := a.CfgSvc.Get(cmd.Context())
@@ -77,7 +77,7 @@ func newGetContextsCommand(a *app.App) *cobra.Command {
 func newDeleteContextsCommand(a *app.App) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "delete-context",
-		Short: "A brief description of your command",
+		Short: "Delete a context",
 		Long:  ``,
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -99,7 +99,6 @@ func newSetContextCommand(a *app.App) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "set-context",
 		Short: "Set a context entry in the configuration file",
-		Long:  `Specifying a name that already exists will merge new fields on top of existing values for those fields.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfgFile, err := a.CfgSvc.Get(cmd.Context())
 			if err != nil && !errors.Is(err, os.ErrNotExist) {

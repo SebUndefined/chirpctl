@@ -28,7 +28,10 @@ func NewRootCmd(a *app.App) *cobra.Command {
 		Use:   "chirpctl",
 		Short: "CLI ChipStark (gRPC)",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
-
+			// The init command must work without an existing configuration.
+			if isConfigInitCommand(cmd) {
+				return nil
+			}
 			// Load the configuration file.
 			file, err := a.CfgSvc.Get(cmd.Context())
 			if err != nil {
@@ -126,4 +129,10 @@ func isConfigCommand(cmd *cobra.Command) bool {
 		}
 	}
 	return false
+}
+
+func isConfigInitCommand(cmd *cobra.Command) bool {
+	return cmd.Name() == "init" &&
+		cmd.Parent() != nil &&
+		cmd.Parent().Name() == "config"
 }

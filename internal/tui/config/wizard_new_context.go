@@ -158,7 +158,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	case 5:
 		var cmd tea.Cmd
-		m.token, cmd = m.tenantID.Update(msg)
+		m.tenantID, cmd = m.tenantID.Update(msg)
 		return m, cmd
 	case 6:
 		var cmd tea.Cmd
