@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./docs/assets/logo_chirpctl.png" width="300" alt="Sublime's custom image"/>
+  <img src="./docs/assets/banner.png" width="300" alt="Sublime's custom image"/>
 </p>
 
 <div align="center">
