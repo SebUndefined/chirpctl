@@ -1,0 +1,11 @@
+template: testify
+dir: "{{.InterfaceDir}}/mocks"
+pkgname: gatewaymocks
+filename: "mock_gateway_{{.InterfaceName | snakecase}}.go"
+structname: "{{.InterfaceName}}Mock"
+force-file-write: true
+
+packages:
+  github.com/sebundefined/chirpctl/internal/chirpstack/v4/gateway:
+    interfaces:
+      Client:

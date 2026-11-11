@@ -1,0 +1,11 @@
+template: testify
+dir: "{{.InterfaceDir}}/mocks"
+pkgname: devicemocks
+filename: "mock_device_{{.InterfaceName | snakecase}}.go"
+structname: "{{.InterfaceName}}Mock"
+force-file-write: true
+
+packages:
+  github.com/sebundefined/chirpctl/internal/chirpstack/v4/device:
+    interfaces:
+      Client:
