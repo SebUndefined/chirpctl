@@ -44,6 +44,8 @@ archives:
       - goos: windows
         formats:
           - zip
+release:
+  mode: keep-existing
 checksum:
   name_template: "chirpctl_{{ .Version }}_checksums.txt"
   algorithm: sha256
