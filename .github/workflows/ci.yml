@@ -1,116 +1,108 @@
 
 name: CI/CD
+
 on:
   pull_request:
     branches:
       - main
       - staging
+
   push:
     branches:
       - main
+
 permissions:
   contents: read
+
 jobs:
   test:
     name: Tests and validation
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+
       - name: Setup Go
         uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: true
+
       - name: Run tests
         run: make test
+
       - name: Run Go vet
         run: make vet
+
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v7
         with:
           version: "~> v2"
           install-only: true
+
       - name: Validate GoReleaser configuration
         run: make release-check
+
   release:
     name: Publish release
     needs: test
+
     if: >-
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main'
+
     runs-on: ubuntu-latest
+
     permissions:
       contents: write
+
     concurrency:
       group: chirpctl-release-main
       cancel-in-progress: false
+
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+
       - name: Setup Go
         uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: true
+
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v7
         with:
           version: "~> v2"
           install-only: true
+
       - name: Validate release configuration
         run: make release-check
+
       - name: Verify cross-platform builds
         run: make snapshot
-      - name: Configure Git identity
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Create or reuse release tag
-        id: version
+
+      - name: Determine semantic version
+        id: semrel
+        uses: go-semantic-release/action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          allow-initial-development-versions: "true"
+
+      - name: Checkout release tag
+        if: steps.semrel.outputs.version != ''
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ steps.semrel.outputs.version }}
         run: |
-          set -euo pipefail
-
           git fetch --tags --force
+          git -c advice.detachedHead=false checkout "v${RELEASE_VERSION}"
 
-          existing=$(git tag --points-at HEAD |
-            grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
-            sort -V | tail -1 || true)
-
-          if [[ -n "$existing" ]]; then
-            tag="$existing"
-            echo "Reusing tag: $tag"
-          else
-            latest=$(git tag --list |
-              grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
-              sort -V | tail -1 || true)
-
-            if [[ -z "$latest" ]]; then
-              tag="v0.1.0"
-            else
-              IFS=. read -r major minor patch <<< "${latest#v}"
-              tag="v${major}.${minor}.$((patch + 1))"
-            fi
-
-            git tag -a "$tag" -m "Release $tag"
-            git push origin "refs/tags/$tag"
-          fi
-
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-
-          if gh release view "$tag" >/dev/null 2>&1; then
-            echo "Release $tag already exists"
-            echo "publish=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "publish=true" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Publish GitHub release
-        if: steps.version.outputs.publish == 'true'
+      - name: Publish GitHub release artifacts
+        if: steps.semrel.outputs.version != ''
         run: make release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
