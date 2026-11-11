@@ -5,7 +5,7 @@ version: 2
 project_name: chirpctl
 builds:
   - id: chirpctl
-    main: .
+    main: ./cmd/chirpctl
     binary: chirpctl
 
     env:
