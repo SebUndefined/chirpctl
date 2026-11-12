@@ -10,7 +10,7 @@ import (
 func registerRootFlags(cmd *cobra.Command, opts *options.Options) {
 	cmd.PersistentFlags().StringVar(&opts.Context, "context", "", "Context to use")
 	cmd.PersistentFlags().StringVar(&opts.Addr, "addr", "", "gRPC address (host:port)")
-	cmd.PersistentFlags().BoolVar(&opts.Insecure, "insecure", false, "Use an unencrypted gRPC connection (unsafe)")
+	cmd.PersistentFlags().BoolVar(&opts.Insecure, "insecure", false, "Use plaintext gRPC (disables TLS encryption)")
 	cmd.PersistentFlags().StringVar(&opts.ApiVersion, "api-version", "v4", "ChirpStack API version")
 	cmd.PersistentFlags().StringVar(&opts.CACert, "cacert", "", "Path to CA certificate")
 	cmd.PersistentFlags().StringVar(&opts.ServerName, "server-name", "", "SNI / TLS name")
@@ -18,4 +18,7 @@ func registerRootFlags(cmd *cobra.Command, opts *options.Options) {
 	cmd.PersistentFlags().DurationVar(&opts.Timeout, "timeout", 10*time.Second, "Command timeout")
 	cmd.PersistentFlags().StringVarP(&opts.Output, "output", "o", "table-styled", "table-styled|table|json|yaml|csv")
 	cmd.PersistentFlags().BoolVarP(&opts.Verbose, "verbose", "v", false, "Enable verbose logging")
+	cmd.PersistentFlags().BoolVar(&opts.MTls.Enabled, "mtls", false, "Enable mutual TLS client authentication")
+	cmd.PersistentFlags().StringVar(&opts.MTls.ClientCert, "client-cert", "", "Path to the mTLS client certificate")
+	cmd.PersistentFlags().StringVar(&opts.MTls.ClientKey, "client-key", "", "Path to the mTLS client private key")
 }

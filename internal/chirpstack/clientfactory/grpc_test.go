@@ -9,11 +9,13 @@ import (
 )
 
 func TestBearerCredentialsMetadata(t *testing.T) {
-	credentials := bearerCreds{token: "test-token"}
+	credentials := bearerCreds{
+		token: "test-token",
+	}
 
 	md, err := credentials.GetRequestMetadata(context.Background())
 
 	require.NoError(t, err)
 	assert.Equal(t, "Bearer test-token", md["authorization"])
-	assert.Equal(t, "chirpctl-1", md["user-agent"])
+	assert.NotContains(t, md, "user-agent")
 }

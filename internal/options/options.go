@@ -14,17 +14,19 @@ import (
 )
 
 type Options struct {
-	Context    string        `json:"context"`
-	Addr       string        `json:"addr"`
-	Insecure   bool          `json:"insecure"`
-	CACert     string        `json:"caCert"`
-	ServerName string        `json:"serverName"`
-	Token      string        `json:"token"`
-	TenantID   string        `json:"tenantID"`
-	Timeout    time.Duration `json:"timeout"`
-	Output     string        `json:"output"`
-	Verbose    bool          `json:"verbose"`
-	ApiVersion string        `json:"apiVersion"`
+	Context       string        `json:"context"`
+	Addr          string        `json:"addr"`
+	Insecure      bool          `json:"insecure"`
+	CACert        string        `json:"caCert"`
+	ServerName    string        `json:"serverName"`
+	Token         string        `json:"token"`
+	TenantID      string        `json:"tenantID"`
+	Timeout       time.Duration `json:"timeout"`
+	TLSSkipVerify bool          `json:"tlsSkipVerify"`
+	MTls          config.MTls   `json:"mTls"`
+	Output        string        `json:"output"`
+	Verbose       bool          `json:"verbose"`
+	ApiVersion    string        `json:"apiVersion"`
 }
 
 func (o Options) MarshalJSON() ([]byte, error) {
@@ -91,6 +93,8 @@ func Resolve(cfg *config.File, flags *pflag.FlagSet, env map[string]string) Opti
 		o.Context = contextName
 		o.Addr = p.Addr
 		o.Insecure = p.Insecure
+		o.TLSSkipVerify = p.TLSSkipVerify
+		o.MTls = p.MTls
 		o.CACert = p.CACert
 		o.ServerName = p.ServerName
 		// Apply the default tenant from the selected context.
@@ -141,6 +145,21 @@ func Resolve(cfg *config.File, flags *pflag.FlagSet, env map[string]string) Opti
 	if value, ok := getEnv("CHIPCTL_TENANT_ID"); ok {
 		o.TenantID = value
 	}
+	if b, ok := getEnvBool("CHIPCTL_TLS_SKIP_VERIFY"); ok {
+		o.TLSSkipVerify = b
+	}
+
+	if b, ok := getEnvBool("CHIPCTL_MTLS"); ok {
+		o.MTls.Enabled = b
+	}
+
+	if v, ok := getEnv("CHIPCTL_CLIENT_CERT"); ok {
+		o.MTls.ClientCert = v
+	}
+
+	if v, ok := getEnv("CHIPCTL_CLIENT_KEY"); ok {
+		o.MTls.ClientKey = v
+	}
 
 	// --- 3) Overrides FLAGS ---
 	if flags != nil {
@@ -171,7 +190,21 @@ func Resolve(cfg *config.File, flags *pflag.FlagSet, env map[string]string) Opti
 		if flags.Changed("api-version") {
 			o.ApiVersion, _ = flags.GetString("api-version")
 		}
-		// profile déjà géré au-dessus
+		if flags.Changed("tls-skip-verify") {
+			o.TLSSkipVerify, _ = flags.GetBool("tls-skip-verify")
+		}
+
+		if flags.Changed("mtls") {
+			o.MTls.Enabled, _ = flags.GetBool("mtls")
+		}
+
+		if flags.Changed("client-cert") {
+			o.MTls.ClientCert, _ = flags.GetString("client-cert")
+		}
+
+		if flags.Changed("client-key") {
+			o.MTls.ClientKey, _ = flags.GetString("client-key")
+		}
 	}
 
 	// --- 4) Defaults & normalisation ---
