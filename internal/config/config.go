@@ -20,15 +20,16 @@ type MTls struct {
 }
 
 type Context struct {
-	Addr       string `yaml:"addr"`
-	Insecure   bool   `yaml:"insecure"`
-	CACert     string `yaml:"caCert"`
-	ServerName string `yaml:"serverName"`
-	Token      string `yaml:"token"`
-	TenantID   string `yaml:"tenantID"`
-	Timeout    string `yaml:"timeout"` // "10s"
-	MTls       MTls   `yaml:"mTls"`
-	ApiVersion string `yaml:"apiVersion"`
+	Addr          string `yaml:"addr"`
+	Insecure      bool   `yaml:"insecure"`
+	CACert        string `yaml:"caCert"`
+	ServerName    string `yaml:"serverName"`
+	Token         string `yaml:"token"`
+	TenantID      string `yaml:"tenantID"`
+	Timeout       string `yaml:"timeout"`       // "10s"
+	TLSSkipVerify bool   `yaml:"tlsSkipVerify"` // TLSSkipVerify disables server certificate verification. caution :)
+	MTls          MTls   `yaml:"mTls"`
+	ApiVersion    string `yaml:"apiVersion"`
 }
 
 func (c Context) Validate() error {
