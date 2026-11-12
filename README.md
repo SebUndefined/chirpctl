@@ -41,13 +41,10 @@ Before continuing, make sure you have:
 4. A valid ChirpStack API token.
 5. A tenant ID, if required by your account or operation.
 
-:::tip
-
-The ChirpStack web interface and gRPC server may use different addresses or ports.
-
+> [!WARNING]
+>The ChirpStack web interface and gRPC server may use different addresses or ports.
 Use the address of the gRPC endpoint, not automatically the URL of the web interface.
 
-:::
 
 ## Step 1 — Initialize your configuration
 
@@ -79,11 +76,9 @@ grpc.example.com:443
 
 Use the actual endpoint and credentials of your ChirpStack instance.
 
-:::warning
+> [!CAUTION]
+> API tokens are secrets. Do not commit your configuration file to Git, share it publicly, or include token values in issue reports.
 
-API tokens are secrets. Do not commit your configuration file to Git, share it publicly, or include token values in issue reports.
-
-:::
 
 ## Step 2 — Check your active context
 
@@ -115,13 +110,9 @@ chirpctl connects to the configured ChirpStack gRPC endpoint and retrieves the a
 
 By default, the command uses a human-readable table format.
 
-:::note
-
-The gateways returned depend on the permissions associated with your API token and any tenant filtering.
-
+> [!TIP]
+> The gateways returned depend on the permissions associated with your API token and any tenant filtering.
 An empty result does not necessarily indicate a connection failure.
-
-:::
 
 ## Step 4 — Request JSON output
 
@@ -171,11 +162,9 @@ chirpctl get gateways --tenant-id <tenant-uuid>
 
 Replace `<tenant-uuid>` with your actual tenant identifier.
 
-:::info
+> [!NOTE]
+> Tenant access is enforced by ChirpStack. Providing a tenant ID does not grant additional permissions to the API token.
 
-Tenant access is enforced by ChirpStack. Providing a tenant ID does not grant additional permissions to the API token.
-
-:::
 
 
 ## Choose your connection security
