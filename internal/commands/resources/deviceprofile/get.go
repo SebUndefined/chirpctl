@@ -3,23 +3,51 @@ package deviceprofile
 import (
 	"fmt"
 
+	"github.com/sebundefined/chirpctl/internal/app"
+	"github.com/sebundefined/chirpctl/internal/commands/cmdutils"
+	"github.com/sebundefined/chirpctl/internal/printing"
+	"github.com/sebundefined/chirpctl/internal/service/deviceprofile"
 	"github.com/spf13/cobra"
 )
 
-func newGetCommand() *cobra.Command {
-	// userCmd represents the user command
-	var userCmd = &cobra.Command{
-		Use:   "get",
-		Short: "Get a user",
-		Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+func NewGetCommand(a *app.App) *cobra.Command {
+	var params deviceprofile.ListParams
+	var cmd = &cobra.Command{
+		Use:     "device-profiles [DEVICE_PROFILE_ID]",
+		Short:   "Display device profiles or a specific device profile",
+		Aliases: []string{"device-profile"},
+		Args:    cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return listDeviceProfiles(cmd, a, params)
+			}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("user get called")
+			return getDeviceProfile(cmd, a, args[0])
 		},
 	}
-	return userCmd
+	cmd.Flags().StringVarP(
+		&params.TenantID, "tenant-id", "t", "",
+		"Filter gateways by tenant UUID",
+	)
+	cmdutils.AttachPaginationFlags(cmd, &params.ListPaginationRequest)
+	cmdutils.AttachOrderByFlags(cmd, &params.ListOrderByRequest)
+	return cmd
+}
+
+func getDeviceProfile(cmd *cobra.Command, a *app.App, s string) error {
+	return nil
+}
+
+func listDeviceProfiles(cmd *cobra.Command, a *app.App, params deviceprofile.ListParams) error {
+	svc, err := a.Factory.DeviceProfile()
+	if err != nil {
+		return fmt.Errorf("initialize device profile service: %w", err)
+	}
+	result, err := svc.List(cmd.Context(), params)
+	if err != nil {
+		return fmt.Errorf("list device profiles: %w", err)
+	}
+	return a.Printer.Print(result, buildDeviceProfileListTable(result.Items,
+		a.Printer.Format() == printing.FormatTableStyled,
+		a.Printer.UseColor()))
 }
