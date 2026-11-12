@@ -99,7 +99,13 @@ jobs:
         run: |
           git fetch --tags --force
           git -c advice.detachedHead=false checkout "v${RELEASE_VERSION}"
-
+      - name: Clean semantic-release artifacts
+        if: steps.semrel.outputs.version != ''
+        shell: bash
+        run: |
+          rm -f .generated-go-semantic-release-changelog.md
+          rm -rf .semrel/
+          git status --short
       - name: Publish GitHub release artifacts
         if: steps.semrel.outputs.version != ''
         run: make release
