@@ -214,21 +214,50 @@ If a token may have been exposed:
 3. Update the relevant secret store or local configuration.
 4. Verify the new token with a permitted operation.
 
-## Protect the connection
 
-API-token authentication does not encrypt network traffic.
+## Transport security and API tokens
 
-Use TLS when communicating with remote ChirpStack servers.
+chirpctl supports API-token authentication over both TLS and explicitly configured plaintext gRPC connections.
 
-:::danger
+With TLS, credentials are protected by the encrypted connection.
 
-Do not use an unencrypted gRPC connection over an untrusted network.
+With plaintext gRPC, the API token is transmitted without gRPC-level encryption.
 
-When chirpctl uses plaintext gRPC, API credentials may be exposed to network observers.
+This can be appropriate when the connection is carried through a trusted, encrypted transport such as an SSH tunnel.
+
+For example:
+
+```yaml
+contexts:
+  private-tunnel:
+    addr: 127.0.0.1:1700
+    apiVersion: v4
+    insecure: true
+    token: ""
+```
+
+The API token can be supplied separately:
+
+```bash
+export CHIPCTL_TOKEN="YOUR_API_TOKEN"
+
+chirpctl --context private-tunnel get gateways
+```
+
+:::warning
+
+Plaintext gRPC does not protect the confidentiality of API tokens by itself.
+
+Only use plaintext mode when the complete communication path is appropriately secured.
+
+Avoid sending credentials over publicly accessible or untrusted plaintext connections.
 
 :::
 
-See [TLS and Certificates](./tls.md) for connection security settings.
+For general production deployments, TLS with certificate verification remains the recommended configuration.
+
+See [TLS and Certificates](./tls.md) for more information.
+
 
 ## Troubleshooting
 

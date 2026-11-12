@@ -1033,3 +1033,231 @@
     animation: none;
   }
 }
+
+
+
+/* ---------------------------------------------------------
+   Built by / Project credits
+   --------------------------------------------------------- */
+
+/* Reduce the spacing between the CTA and project credits. */
+.ctaSection.ctaBeforeCredits {
+  padding-bottom: 24px;
+  margin-bottom: 0;
+}
+
+.builtBySection {
+  position: relative;
+  padding: 0 0 clamp(56px, 7vw, 96px);
+  margin: 0;
+}
+
+.builtByCard {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.25fr);
+  gap: clamp(28px, 4vw, 56px);
+  align-items: center;
+
+  padding: clamp(28px, 4vw, 44px);
+
+  background: linear-gradient(
+          135deg,
+          rgba(23, 35, 53, 0.8),
+          rgba(13, 21, 35, 0.72)
+  );
+
+  border: 1px solid rgba(168, 196, 214, 0.13);
+  border-radius: 20px;
+}
+
+.builtByIntro {
+  min-width: 0;
+}
+
+.builtByTitle {
+  max-width: 420px;
+  margin: 14px 0 14px;
+
+  color: #f5f8fc;
+  font-size: clamp(1.55rem, 2.5vw, 2.15rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+
+.builtByDescription {
+  max-width: 430px;
+  margin: 0;
+
+  color: #a8b7c8;
+  font-size: 0.96rem;
+  line-height: 1.75;
+}
+
+.builtByPeople {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.builtByItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 0;
+}
+
+.builtByIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+
+  width: 44px;
+  height: 44px;
+
+  color: #81b8d8;
+  background: rgba(129, 184, 216, 0.09);
+  border: 1px solid rgba(129, 184, 216, 0.18);
+  border-radius: 12px;
+}
+
+.builtByItemContent {
+  min-width: 0;
+  flex: 1;
+}
+
+.builtByLabel {
+  display: block;
+
+  margin: 0 0 7px;
+
+  color: #81b8d8;
+  font-size: 0.69rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+}
+
+.builtByItemContent h3 {
+  margin: 0 0 6px;
+
+  color: #f0f5fa;
+  font-size: 1.08rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.builtByItemContent p {
+  margin: 0;
+
+  color: #99aabd;
+  font-size: 0.87rem;
+  line-height: 1.65;
+}
+
+.builtByDivider {
+  height: 1px;
+  margin-left: 60px;
+  background: rgba(168, 196, 214, 0.12);
+}
+
+.builtByLinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+
+  margin-top: 14px;
+}
+
+.builtByLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-height: 36px;
+  padding: 7px 12px;
+
+  color: #b9d8e9;
+  background: rgba(129, 184, 216, 0.06);
+  border: 1px solid rgba(129, 184, 216, 0.16);
+  border-radius: 8px;
+
+  font-size: 0.79rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-decoration: none;
+
+  transition:
+          color 160ms ease,
+          background 160ms ease,
+          border-color 160ms ease,
+          transform 160ms ease;
+}
+
+.builtByLink:hover {
+  color: #ffffff;
+  background: rgba(129, 184, 216, 0.13);
+  border-color: rgba(129, 184, 216, 0.35);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.builtByLink:focus-visible {
+  outline: 2px solid #81b8d8;
+  outline-offset: 3px;
+}
+
+@media (max-width: 996px) {
+  .builtByCard {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+
+  .builtByTitle,
+  .builtByDescription {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .ctaSection.ctaBeforeCredits {
+    padding-bottom: 16px;
+  }
+
+  .builtBySection {
+    padding-bottom: 48px;
+  }
+
+  .builtByCard {
+    padding: 24px 20px;
+    gap: 28px;
+    border-radius: 16px;
+  }
+
+  .builtByItem {
+    gap: 12px;
+  }
+
+  .builtByIcon {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .builtByDivider {
+    margin-left: 52px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .builtByLink {
+    transition: none;
+  }
+
+  .builtByLink:hover {
+    transform: none;
+  }
+}

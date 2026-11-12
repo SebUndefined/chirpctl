@@ -12,6 +12,7 @@ import (
 
 	deviceV4 "github.com/sebundefined/chirpctl/internal/chirpstack/v4/device"
 	gatewayV4 "github.com/sebundefined/chirpctl/internal/chirpstack/v4/gateway"
+	"github.com/sebundefined/chirpctl/internal/config"
 	"github.com/sebundefined/chirpctl/internal/service/device"
 	"github.com/sebundefined/chirpctl/internal/service/gateway"
 	"google.golang.org/grpc"
@@ -29,8 +30,9 @@ type Factory interface {
 
 type ResolveConfig struct {
 	Addr, CACert, ServerName, Token, ApiVersion, Transport string
-	Insecure                                               bool
+	Insecure, TLSSkipVerify                                bool
 	Timeout                                                time.Duration
+	MTls                                                   config.MTls
 }
 
 type factory struct {
@@ -138,42 +140,101 @@ func (f *factory) Gateway() (gateway.API, error) {
 
 func (f *factory) grpcConn() (*grpc.ClientConn, error) {
 	if err := f.connOnce.do(func() error {
-		var dialOpts []grpc.DialOption
-		if f.cfg.Insecure {
-			dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-		} else {
-			tlsCfg := &tls.Config{ServerName: f.cfg.ServerName}
-			if tlsCfg.ServerName == "" {
-				if host, _, err := net.SplitHostPort(f.cfg.Addr); err == nil {
-					tlsCfg.ServerName = host
-				}
-			}
-			if f.cfg.CACert != "" {
-				ca, err := os.ReadFile(f.cfg.CACert)
-				if err != nil {
-					return err
-				}
-				cp := x509.NewCertPool()
-				cp.AppendCertsFromPEM(ca)
-				tlsCfg.RootCAs = cp
-			}
-			dialOpts = append(dialOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsCfg)))
-		}
-		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(bearerCreds{
-			token:    strings.TrimSpace(f.cfg.Token),
-			insecure: f.cfg.Insecure,
-		}))
-
-		conn, err := grpc.NewClient(f.cfg.Addr, dialOpts...)
+		transportCreds, err := buildTransportCredentials(f.cfg)
 		if err != nil {
-			return err
+			return fmt.Errorf("build gRPC transport credentials: %w", err)
 		}
+
+		conn, err := grpc.NewClient(
+			f.cfg.Addr,
+			grpc.WithTransportCredentials(transportCreds),
+			grpc.WithPerRPCCredentials(bearerCreds{
+				token:          strings.TrimSpace(f.cfg.Token),
+				allowPlaintext: f.cfg.Insecure,
+			}),
+			grpc.WithUserAgent("chirpctl/1"),
+		)
+		if err != nil {
+			return fmt.Errorf("create gRPC client: %w", err)
+		}
+
 		f.conn = conn
 		return nil
 	}); err != nil {
 		return nil, err
 	}
+
 	return f.conn, nil
+}
+func buildTransportCredentials(cfg ResolveConfig) (credentials.TransportCredentials, error) {
+	if cfg.Insecure {
+		if cfg.TLSSkipVerify {
+			return nil, errors.New(
+				"tls-skip-verify cannot be used with plaintext gRPC",
+			)
+		}
+
+		if cfg.MTls.Enabled {
+			return nil, errors.New(
+				"mTLS cannot be enabled with plaintext gRPC",
+			)
+		}
+
+		if cfg.CACert != "" || cfg.ServerName != "" {
+			return nil, errors.New(
+				"TLS settings cannot be used with plaintext gRPC",
+			)
+		}
+
+		return insecure.NewCredentials(), nil
+	}
+	serverName := cfg.ServerName
+
+	if serverName == "" {
+		host, _, err := net.SplitHostPort(cfg.Addr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid gRPC address: %w", err)
+		}
+		serverName = host
+	}
+	// Simple tls config
+	tlsCfg := &tls.Config{
+		ServerName:         serverName,
+		InsecureSkipVerify: cfg.TLSSkipVerify,
+		MinVersion:         tls.VersionTLS12,
+	}
+	// Case custom
+	if len(strings.TrimSpace(cfg.CACert)) > 0 {
+		roots, err := x509.SystemCertPool()
+		if err != nil {
+			return nil, fmt.Errorf("load system certificate pool: %w", err)
+		}
+
+		caPEM, err := os.ReadFile(cfg.CACert)
+		if err != nil {
+			return nil, fmt.Errorf("read custom CA certificate: %w", err)
+		}
+
+		if ok := roots.AppendCertsFromPEM(caPEM); !ok {
+			return nil, errors.New("no valid CA certificates found")
+		}
+
+		tlsCfg.RootCAs = roots
+	}
+	if cfg.MTls.Enabled {
+		if cfg.MTls.ClientCert == "" || cfg.MTls.ClientKey == "" {
+			return nil, errors.New(
+				"mTLS requires a client certificate and private key",
+			)
+		}
+		cert, err := tls.LoadX509KeyPair(cfg.MTls.ClientCert, cfg.MTls.ClientKey)
+		if err != nil {
+			return nil, err
+		}
+
+		tlsCfg.Certificates = []tls.Certificate{cert}
+	}
+	return credentials.NewTLS(tlsCfg), nil
 }
 
 func (f *factory) GetCurrentConfig() (ResolveConfig, error) {

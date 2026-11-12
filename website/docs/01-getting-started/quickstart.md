@@ -161,6 +161,30 @@ Tenant access is enforced by ChirpStack. Providing a tenant ID does not grant ad
 
 :::
 
+
+## Choose your connection security
+
+chirpctl supports several gRPC connection modes.
+
+Choose the mode that matches your ChirpStack deployment:
+
+| Environment                               | Recommended configuration |
+|-------------------------------------------|---------------------------|
+| Public server with valid certificate      | Standard TLS              |
+| Private server with internal CA           | TLS with `caCert`         |
+| Testing server with untrusted certificate | TLS with `tlsSkipVerify`  |
+| Local service over a trusted SSH tunnel   | Plaintext with `insecure` |
+| Server requiring client certificates      | mTLS                      |
+
+For a standard production endpoint, use TLS with certificate verification.
+
+For a private server with an internal CA, configure the trusted CA certificate.
+
+For an SSH tunnel exposing a local plaintext gRPC endpoint, use `insecure: true`.
+
+See [TLS and Certificates](../02-configuration/tls.md) for detailed examples and security recommendations.
+
+
 ## Troubleshooting your first connection
 
 ### Unauthenticated

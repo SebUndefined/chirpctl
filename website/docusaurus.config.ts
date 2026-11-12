@@ -26,7 +26,11 @@ const config: Config = {
   projectName: 'chirpctl', // Usually your repo name.
 
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
+  },
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -93,46 +97,42 @@ const config: Config = {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
+          title: 'Documentation',
           items: [
             {
-              label: 'Tutorial',
-              to: '/docs/intro',
+              label: 'Overview',
+              to: '/docs/',
+            },
+            {
+              label: 'Getting started',
+              to: '/docs/getting-started/installation',
             },
           ],
         },
         {
-          title: 'Community',
+          title: 'Project',
           items: [
-            {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-            },
-            {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
-            },
-            {
-              label: 'X',
-              href: 'https://x.com/docusaurus',
-            },
-          ],
-        },
-        {
-          title: 'More',
-          items: [
-            {
-              label: 'Blog',
-              to: '/blog',
-            },
             {
               label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
+              href: 'https://github.com/sebundefined/chirpctl',
+            },
+            {
+              label: 'Releases',
+              href: 'https://github.com/sebundefined/chirpctl/releases',
+            },
+          ],
+        },
+        {
+          title: 'Arkhale',
+          items: [
+            {
+              label: 'Website',
+              href: 'https://www.arkhale.com/',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} chirpctl. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} chirpctl.`,
     },
     prism: {
       theme: prismThemes.github,

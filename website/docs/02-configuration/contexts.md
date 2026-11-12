@@ -23,11 +23,11 @@ Contexts allow you to work across multiple environments without repeatedly enter
 
 A typical LoRaWAN deployment may include several ChirpStack environments:
 
-| Context | Purpose |
-| --- | --- |
-| `development` | Local development and testing |
-| `staging` | Preproduction validation |
-| `production` | Production LoRaWAN infrastructure |
+| Context       | Purpose                           |
+|---------------|-----------------------------------|
+| `development` | Local development and testing     |
+| `staging`     | Preproduction validation          |
+| `production`  | Production LoRaWAN infrastructure |
 
 Instead of manually changing the server address and token for every command, chirpctl loads the appropriate settings from your context.
 
@@ -67,7 +67,7 @@ A configuration containing two contexts may look like this:
 
 ```yaml
 version: 1
-defaultContext: staging
+defaultContext: production
 
 contexts:
   staging:
@@ -87,16 +87,25 @@ contexts:
   production:
     addr: grpc.example.com:443
     apiVersion: v4
+
+    # Transport
     insecure: false
-    caCert: ""
+    tlsSkipVerify: false
+    caCert: /etc/chirpctl/certs/internal-ca.pem
     serverName: grpc.example.com
-    token: ""
-    tenantID: "22222222-2222-4222-8222-222222222222"
-    timeout: 15s
+
+    # Mutual TLS (optional)
     mTls:
       enabled: false
       clientCert: ""
       clientKey: ""
+
+    # Authentication
+    token: ""
+    tenantID: "11111111-1111-4111-8111-111111111111"
+
+    # Request settings
+    timeout: 15s
 
 ui:
   output: table-styled
@@ -120,28 +129,32 @@ The example tenant IDs and server addresses above are placeholders.
 
 ### Top-level properties
 
-| Property | Description |
-| --- | --- |
-| `version` | Configuration file schema version |
-| `defaultContext` | Name of the default context |
-| `contexts` | Map of named connection profiles |
-| `ui.output` | Preferred output format |
+| Property         | Description                       |
+|------------------|-----------------------------------|
+| `version`        | Configuration file schema version |
+| `defaultContext` | Name of the default context       |
+| `contexts`       | Map of named connection profiles  |
+| `ui.output`      | Preferred output format           |
 
 The current configuration file format uses `version: 1`.
 
 ### Context properties
 
-| Property | Required | Description |
-| --- | --- | --- |
-| `addr` | Yes | gRPC server address in `host:port` format |
-| `apiVersion` | Yes | ChirpStack API version, currently `v4` |
-| `insecure` | No | Use unencrypted gRPC when `true` |
-| `caCert` | No | Path to a trusted CA certificate |
-| `serverName` | No | Expected TLS server name |
-| `token` | No | ChirpStack API token |
-| `tenantID` | No | Default tenant UUID |
-| `timeout` | No | Command timeout, such as `10s` |
-| `mTls` | No | Reserved client-certificate configuration |
+| Property          | Required | Description                                         |
+|-------------------|----------|-----------------------------------------------------|
+| `addr`            | Yes      | gRPC server address in `host:port` format           |
+| `apiVersion`      | Yes      | ChirpStack API version, currently `v4`              |
+| `insecure`        | No       | Use plaintext gRPC without TLS encryption           |
+| `tlsSkipVerify`   | No       | Enable TLS without verifying the server certificate |
+| `caCert`          | No       | Path to an additional trusted CA certificate bundle |
+| `mTls.enabled`    | No       | Enable mutual TLS client authentication             |
+| `mTls.clientCert` | No       | Path to the client certificate                      |
+| `mTls.clientKey`  | No       | Path to the client private key                      |
+| `serverName`      | No       | Expected TLS server name                            |
+| `token`           | No       | ChirpStack API token                                |
+| `tenantID`        | No       | Default tenant UUID                                 |
+| `timeout`         | No       | Command timeout, such as `10s`                      |
+| `mTls`            | No       | Reserved client-certificate configuration           |
 
 :::caution
 

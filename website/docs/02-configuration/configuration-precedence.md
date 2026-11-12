@@ -85,11 +85,11 @@ Only the overridden property changes. Other settings continue to come from the s
 
 Context selection follows a separate precedence rule:
 
-| Priority | Source |
-| --- | --- |
-| 1 | `--context` |
-| 2 | `CHIPCTL_PROFILE` |
-| 3 | YAML `defaultContext` |
+| Priority | Source                |
+|----------|-----------------------|
+| 1        | `--context`           |
+| 2        | `CHIPCTL_PROFILE`     |
+| 3        | YAML `defaultContext` |
 
 For example:
 
@@ -143,18 +143,25 @@ The name reflects the current configuration resolver implementation.
 
 The following variables are handled by the connection options resolver:
 
-| Environment variable | Corresponding setting |
-| --- | --- |
-| `CHIPCTL_PROFILE` | Selected context |
-| `CHIPCTL_ADDR` | gRPC server address |
-| `CHIPCTL_INSECURE` | Plaintext gRPC mode |
-| `CHIPCTL_CACERT` | Custom CA certificate path |
-| `CHIPCTL_SERVER_NAME` | TLS server name |
-| `CHIPCTL_TOKEN` | API token |
-| `CHIPCTL_TIMEOUT` | Command timeout |
-| `CHIPCTL_OUTPUT` | Output format |
-| `CHIPCTL_VERBOSE` | Verbose logging |
-| `CHIPCTL_API_VERSION` | ChirpStack API version |
+
+| Environment variable      | Corresponding setting                    |
+|---------------------------|------------------------------------------|
+| `CHIPCTL_PROFILE`         | Selected context                         |
+| `CHIPCTL_ADDR`            | gRPC server address                      |
+| `CHIPCTL_INSECURE`        | Plaintext gRPC mode                      |
+| `CHIPCTL_TLS_SKIP_VERIFY` | Skip TLS server certificate verification |
+| `CHIPCTL_CACERT`          | Custom CA certificate path               |
+| `CHIPCTL_SERVER_NAME`     | TLS server name                          |
+| `CHIPCTL_MTLS`            | Enable mutual TLS                        |
+| `CHIPCTL_CLIENT_CERT`     | mTLS client certificate path             |
+| `CHIPCTL_CLIENT_KEY`      | mTLS client private key path             |
+| `CHIPCTL_TOKEN`           | API token                                |
+| `CHIPCTL_TENANT_ID`       | Default tenant ID override               |
+| `CHIPCTL_TIMEOUT`         | Command timeout                          |
+| `CHIPCTL_OUTPUT`          | Output format                            |
+| `CHIPCTL_VERBOSE`         | Verbose logging                          |
+| `CHIPCTL_API_VERSION`     | ChirpStack API version                   |
+
 
 Use the `CHIPCTL_` prefix exactly as shown.
 
@@ -204,18 +211,24 @@ If no valid timeout is configured, chirpctl uses its built-in timeout.
 
 The corresponding root-level flags include:
 
-| Flag | Purpose |
-| --- | --- |
-| `--context` | Select a context |
-| `--addr` | Override gRPC endpoint |
-| `--insecure` | Use plaintext gRPC |
-| `--cacert` | Override CA certificate path |
-| `--server-name` | Override TLS server name |
-| `--token` | Override API token |
-| `--timeout` | Override timeout |
-| `--output`, `-o` | Select output format |
-| `--verbose`, `-v` | Enable verbose logging |
-| `--api-version` | Select API version |
+
+| Flag                | Purpose                                     |
+|---------------------|---------------------------------------------|
+| `--context`         | Select a context                            |
+| `--addr`            | Override gRPC endpoint                      |
+| `--insecure`        | Use plaintext gRPC                          |
+| `--tls-skip-verify` | Disable TLS server certificate verification |
+| `--cacert`          | Override CA certificate path                |
+| `--server-name`     | Override TLS server name                    |
+| `--mtls`            | Enable mutual TLS                           |
+| `--client-cert`     | Path to the mTLS client certificate         |
+| `--client-key`      | Path to the mTLS client private key         |
+| `--token`           | Override API token                          |
+| `--timeout`         | Override timeout                            |
+| `--output`, `-o`    | Select output format                        |
+| `--verbose`, `-v`   | Enable verbose logging                      |
+| `--api-version`     | Select API version                          |
+
 
 For example:
 
@@ -286,13 +299,13 @@ ui:
 
 Supported formats include:
 
-| Format | Intended usage |
-| --- | --- |
-| `table-styled` | Human-readable terminal output |
-| `table` | Plain table |
-| `json` | Scripts and structured processing |
-| `yaml` | Structured configuration and inspection |
-| `csv` | Spreadsheet and external data processing |
+| Format         | Intended usage                           |
+|----------------|------------------------------------------|
+| `table-styled` | Human-readable terminal output           |
+| `table`        | Plain table                              |
+| `json`         | Scripts and structured processing        |
+| `yaml`         | Structured configuration and inspection  |
+| `csv`          | Spreadsheet and external data processing |
 
 You can request a format explicitly:
 
@@ -333,6 +346,37 @@ These are command-specific filters.
 The effective tenant selection also takes into account the tenant configured in the selected context when supported by the command.
 
 Do not assume that every YAML context field has a corresponding environment variable or root-level flag.
+
+
+### Tenant ID precedence
+
+For commands that support tenant filtering, the tenant ID can be obtained from several sources.
+
+The effective tenant selection follows this precedence:
+
+1. Explicit command-specific `--tenant-id` flag
+2. `CHIPCTL_TENANT_ID` environment variable
+3. Selected context's `tenantID` field
+
+For example:
+
+```bash
+chirpctl get gateways --tenant-id <tenant-uuid>
+```
+
+Global administrators can also request gateways across tenants:
+
+```bash
+chirpctl get gateways --all-tenants
+```
+
+This explicitly bypasses the default tenant filter, but does not bypass ChirpStack permissions.
+
+The `--tenant-id` and `--all-tenants` flags cannot be used together.
+
+A tenant ID is a resource filter, not an authentication credential.
+
+
 
 ## Using chirpctl in CI/CD
 

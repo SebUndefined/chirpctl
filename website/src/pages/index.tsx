@@ -15,15 +15,19 @@ import {
     RadioTower,
     ShieldCheck,
     Terminal,
-    type LucideIcon,
+    type LucideIcon, Building2, UserRound,
 } from 'lucide-react';
 import { FaGithub } from 'react-icons/fa6';
 
 import styles from './index.module.css';
 import useBaseUrl from "@docusaurus/useBaseUrl";
+import {FaLinkedin} from "react-icons/fa";
 
 const GITHUB_URL = 'https://github.com/sebundefined/chirpctl';
 const RELEASES_URL = `${GITHUB_URL}/releases/latest`;
+const SEB_LINKEDIN_URL = 'https://www.linkedin.com/in/sebastien-pichon-sebundefined/';
+
+const ARK_LINKEDIN_URL = 'https://www.linkedin.com/company/arkhale/';
 
 type Feature = {
     title: string;
@@ -415,7 +419,7 @@ function CompatibilitySection(): ReactNode {
 
 function GetStartedSection(): ReactNode {
     return (
-        <section className={styles.ctaSection}>
+        <section className={`${styles.ctaSection} ${styles.ctaBeforeCredits}`}>
             <div className={styles.container}>
                 <div className={styles.ctaCard}>
                     <div className={styles.ctaGlow} aria-hidden="true" />
@@ -456,6 +460,132 @@ function GetStartedSection(): ReactNode {
     );
 }
 
+
+function BuildBy(): ReactNode {
+    return (
+        <section
+            className={styles.builtBySection}
+            aria-labelledby="built-by-title"
+        >
+            <div className={styles.container}>
+                <div className={styles.builtByCard}>
+                    <div className={styles.builtByIntro}>
+                        <span className={styles.sectionEyebrow}>
+                            BEHIND THE PROJECT
+                        </span>
+
+                        <Heading
+                            as="h2"
+                            id="built-by-title"
+                            className={styles.builtByTitle}
+                        >
+                            Built from real-world IoT experience.
+                        </Heading>
+
+                        <p className={styles.builtByDescription}>
+                            chirpctl is an independent open-source project,
+                            created to make ChirpStack administration simpler,
+                            more accessible and easier to automate.
+                        </p>
+                    </div>
+
+                    <div className={styles.builtByPeople}>
+                        <div className={styles.builtByItem}>
+                            <div className={styles.builtByIcon}>
+                                <UserRound
+                                    size={21}
+                                    strokeWidth={1.8}
+                                    aria-hidden="true"
+                                />
+                            </div>
+
+                            <div className={styles.builtByItemContent}>
+                                <span className={styles.builtByLabel}>
+                                    CREATED & MAINTAINED BY
+                                </span>
+
+                                <h3>Sébastien Pichon</h3>
+
+                                <p>
+                                    Software engineer, Go developer
+                                    and co-founder of Arkhale.
+                                </p>
+
+                                <div className={styles.builtByLinks}>
+                                    <Link
+                                        href={GITHUB_URL}
+                                        className={styles.builtByLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label="chirpctl on GitHub"
+                                    >
+                                        <FaGithub size={16} aria-hidden="true" />
+                                        GitHub
+                                        <ArrowUpRight size={14} aria-hidden="true" />
+                                    </Link>
+
+                                    <Link
+                                        href={SEB_LINKEDIN_URL}
+                                        className={styles.builtByLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label="Sébastien Pichon on LinkedIn"
+                                    >
+                                        <FaLinkedin size={16} aria-hidden="true" />
+                                        LinkedIn
+                                        <ArrowUpRight size={14} aria-hidden="true" />
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className={styles.builtByDivider} aria-hidden="true" />
+
+                        <div className={styles.builtByItem}>
+                            <div className={styles.builtByIcon}>
+                                <Building2
+                                    size={21}
+                                    strokeWidth={1.8}
+                                    aria-hidden="true"
+                                />
+                            </div>
+
+                            <div className={styles.builtByItemContent}>
+                                <span className={styles.builtByLabel}>
+                                    CONNECTED TO
+                                </span>
+
+                                <h3>Arkhale</h3>
+
+                                <p>
+                                    A French software company specializing in IoT,
+                                    cloud solutions and connected infrastructure.
+                                </p>
+
+                                <div className={styles.builtByLinks}>
+                                    <Link
+                                        href={ARK_LINKEDIN_URL}
+                                        className={styles.builtByLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label="Arkhale on LinkedIn"
+                                    >
+                                        <FaLinkedin size={16} aria-hidden="true" />
+                                        LinkedIn
+                                        <ArrowUpRight size={14} aria-hidden="true" />
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+
+
 export default function Home(): ReactNode {
     return (
         <Layout
@@ -468,6 +598,7 @@ export default function Home(): ReactNode {
                 <WorkflowSection />
                 <CompatibilitySection />
                 <GetStartedSection />
+                <BuildBy/>
             </main>
         </Layout>
     );

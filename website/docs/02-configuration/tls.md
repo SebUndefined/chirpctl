@@ -1,39 +1,33 @@
+
 ---
 title: TLS and Certificates
 sidebar_position: 3
-description: Secure gRPC connections to ChirpStack using TLS and custom CA certificates.
+description: Configure encrypted gRPC connections, custom certificate authorities, TLS verification and mutual TLS.
 ---
 
 # TLS and Certificates
 
-chirpctl communicates with ChirpStack through gRPC.
+chirpctl communicates with ChirpStack using gRPC and supports several transport security configurations.
 
-For remote infrastructure, **TLS is strongly recommended** to protect API credentials and network traffic.
+The recommended mode is **TLS with server certificate verification**, which protects both the connection and the identity of the remote server.
 
-chirpctl supports TLS server verification, custom CA certificates, and explicit TLS server names.
+Other modes are available for private infrastructure, development environments and advanced deployments.
 
-## Connection modes
+## Available connection modes
 
-chirpctl provides two transport modes:
+| Mode | Encrypted | Server verified | Typical use |
+| --- | --- | --- | --- |
+| Standard TLS | Yes | Yes | Public and production servers |
+| TLS with custom CA | Yes | Yes | Private PKI and self-signed certificates |
+| TLS with verification disabled | Yes | No | Testing and diagnostics |
+| Plaintext gRPC | No | No | Local services and trusted tunnels |
+| Mutual TLS (mTLS) | Yes | Yes* | Client certificate authentication |
 
-| Configuration | Transport | Encrypted |
-| --- | --- | --- |
-| `insecure: false` | gRPC over TLS | Yes |
-| `insecure: true` | Plaintext gRPC | No |
+*The server is verified when `tlsSkipVerify` is disabled and the appropriate CA is trusted.*
 
-:::danger
+## Standard TLS
 
-The `insecure` setting does not simply disable certificate validation.
-
-Setting `insecure: true` disables TLS entirely.
-
-Do not enable it to work around an invalid certificate on a production endpoint.
-
-:::
-
-## Standard TLS connection
-
-For a ChirpStack server using a certificate trusted by your operating system, use:
+TLS is enabled by default when `insecure` is set to `false`.
 
 ```yaml
 contexts:
@@ -41,54 +35,181 @@ contexts:
     addr: grpc.example.com:443
     apiVersion: v4
     insecure: false
+    tlsSkipVerify: false
     serverName: grpc.example.com
-    caCert: ""
+```
+
+With this configuration, chirpctl:
+
+1. Establishes an encrypted TLS connection.
+2. Verifies the server's certificate chain.
+3. Verifies that the certificate matches the expected server name.
+4. Uses the operating system's trusted certificate authorities.
+
+The `addr` field must contain a `host:port` address, not an HTTP URL.
+
+## Using a custom CA certificate
+
+Private ChirpStack installations may use certificates signed by an internal certificate authority.
+
+Use `caCert` to add the appropriate CA certificate:
+
+```yaml
+contexts:
+  private:
+    addr: grpc.internal.example.com:443
+    apiVersion: v4
+    insecure: false
+    tlsSkipVerify: false
+    caCert: /etc/chirpctl/certs/internal-ca.pem
+    serverName: grpc.internal.example.com
+```
+
+The certificate file must be PEM encoded.
+
+With the current certificate-loading design, chirpctl adds certificates from `caCert` to the operating system's trusted certificate pool.
+
+This allows both publicly trusted certificates and certificates issued by the configured private CA to be validated.
+
+### Self-signed certificates
+
+A self-signed certificate does not automatically require disabling TLS verification.
+
+When the certificate can be used as an appropriate trust anchor, explicitly trust it through `caCert`.
+
+The certificate must still satisfy the applicable TLS verification requirements, including the expected server identity.
+
+:::tip
+
+For production environments using an internal PKI, prefer `caCert` over `tlsSkipVerify`.
+
+This preserves both encryption and server authentication.
+
+:::
+
+## TLS without certificate verification
+
+chirpctl provides the `tlsSkipVerify` setting for environments where certificate verification must be bypassed temporarily.
+
+```yaml
+contexts:
+  testing:
+    addr: grpc-testing.example.com:443
+    apiVersion: v4
+    insecure: false
+    tlsSkipVerify: true
+```
+
+You can also enable this behavior for an individual command:
+
+```bash
+chirpctl --tls-skip-verify get gateways
+```
+
+In this mode:
+
+- TLS encryption remains enabled.
+- The server certificate chain is not verified.
+- The server's hostname is not verified.
+
+:::danger
+
+Disabling certificate verification weakens connection security and permits man-in-the-middle attacks.
+
+Do not use `tlsSkipVerify` as a permanent workaround for an incorrectly configured production certificate.
+
+:::
+
+If `caCert` is also configured, it does not restore standard server verification while `tlsSkipVerify` is enabled.
+
+## Plaintext gRPC
+
+Set `insecure` to `true` to disable TLS entirely.
+
+```yaml
+contexts:
+  local:
+    addr: 127.0.0.1:1700
+    apiVersion: v4
+    insecure: true
+```
+
+Equivalent command-line usage:
+
+```bash
+chirpctl \
+  --addr 127.0.0.1:1700 \
+  --insecure \
+  get gateways
+```
+
+:::important
+
+`insecure: true` disables TLS encryption. It does not merely disable certificate verification.
+
+Use `tlsSkipVerify` when TLS encryption is required but certificate verification must be bypassed.
+
+:::
+
+### Using plaintext gRPC through an SSH tunnel
+
+A common deployment pattern exposes ChirpStack only through a private network.
+
+For example:
+
+```text
+chirpctl
+    |
+    | Plaintext gRPC
+    v
+127.0.0.1:1700
+    |
+    | Encrypted SSH tunnel
+    v
+Bastion / private server
+    |
+    | Private network
+    v
+ChirpStack gRPC API
+```
+
+The local chirpctl connection uses plaintext gRPC, while the SSH tunnel encrypts its own network segment.
+
+A suitable context is:
+
+```yaml
+contexts:
+  private-tunnel:
+    addr: 127.0.0.1:1700
+    apiVersion: v4
+    insecure: true
     token: ""
-    timeout: 10s
+    timeout: 15s
 ```
 
-The important settings are:
+With the tunnel established, provide the API token through an environment variable:
 
-- `addr`: gRPC endpoint, including the port
-- `insecure: false`: enable TLS
-- `serverName`: expected certificate identity
-- `caCert`: optional custom CA certificate
+```bash
+export CHIPCTL_TOKEN="YOUR_API_TOKEN"
 
-If `caCert` is empty, the client uses the system's default trusted certificate authorities.
-
-## Understanding the server address
-
-The `addr` property must use the `host:port` format:
-
-```yaml
-addr: grpc.example.com:443
+chirpctl --context private-tunnel get gateways
 ```
 
-It is not an HTTP URL.
+chirpctl allows Bearer authentication over explicitly selected plaintext gRPC connections.
 
-Do not use:
+:::warning
 
-```yaml
-addr: https://grpc.example.com
-```
+An SSH tunnel protects traffic only along the tunnel itself.
 
-The gRPC client expects a network address, not a URL with a scheme.
+If the connection continues from the SSH endpoint to ChirpStack over another network segment, that segment must also be appropriately secured.
 
-:::note
-
-The port depends on your ChirpStack deployment, reverse proxy, and TLS termination configuration.
-
-Port `443` is common for publicly exposed TLS services, but is not guaranteed.
+Avoid exposing plaintext gRPC endpoints to untrusted networks.
 
 :::
 
 ## TLS server name
 
-TLS validates the identity of the server against its certificate.
-
-The `serverName` property controls the name expected during TLS verification.
-
-For example:
+The `serverName` property controls the server identity expected during TLS verification.
 
 ```yaml
 addr: 192.0.2.10:443
@@ -96,226 +217,130 @@ serverName: grpc.example.com
 insecure: false
 ```
 
-This configuration connects to the specified address while validating the certificate for `grpc.example.com`.
+This allows the TCP connection to target an IP address while validating the certificate against a DNS hostname.
 
-It can be useful when:
+When `serverName` is omitted, chirpctl derives it from the host portion of `addr`.
 
-- Accessing a service through a private IP address
-- Using a reverse proxy
-- Connecting through a VPN
-- Testing a specific endpoint without changing DNS
+The server name is also relevant to TLS Server Name Indication (SNI) when a DNS name is used.
 
-### Default behavior
+## Mutual TLS (mTLS)
 
-When no explicit `serverName` is configured, chirpctl derives the TLS server name from the host portion of `addr`.
+Mutual TLS allows the server to authenticate the client using a client certificate.
 
-For example:
+It provides an additional authentication mechanism at the transport layer.
 
-```yaml
-addr: grpc.example.com:443
-serverName: ""
-```
-
-The effective TLS server name is derived from `grpc.example.com`.
-
-For predictable production configurations, setting the expected hostname explicitly is reasonable.
-
-## Custom certificate authorities
-
-Some private ChirpStack deployments use certificates issued by an internal certificate authority.
-
-If the certificate chain is not trusted by the operating system, you may configure a custom CA certificate.
-
-For example:
+A mutual TLS configuration looks like this:
 
 ```yaml
 contexts:
-  private-network:
-    addr: grpc.internal.example.com:443
+  secure:
+    addr: grpc.secure.example.com:443
     apiVersion: v4
     insecure: false
+    tlsSkipVerify: false
     caCert: /etc/chirpctl/certs/internal-ca.pem
-    serverName: grpc.internal.example.com
-    token: ""
-    timeout: 10s
+    serverName: grpc.secure.example.com
+
+    mTls:
+      enabled: true
+      clientCert: /etc/chirpctl/certs/client.crt
+      clientKey: /etc/chirpctl/certs/client.key
 ```
 
-The file must contain one or more trusted CA certificates in PEM format.
+When mTLS is enabled, chirpctl loads the configured certificate and private key and makes the certificate available during the TLS handshake.
 
-### Important trust-store behavior
+The certificate and private key must form a valid pair.
 
-When a custom `caCert` is supplied, the current chirpctl gRPC client builds its trust pool from that PEM file.
+### mTLS command-line options
 
-This replaces the default system trust pool for that connection rather than automatically appending to it.
-
-If your deployment requires multiple private CAs, the configured PEM file must contain the appropriate certificates.
-
-### Configure the CA path from the CLI
-
-To use a custom CA for a single command:
+When the corresponding flags are registered, the equivalent configuration is:
 
 ```bash
 chirpctl \
-  --cacert /etc/chirpctl/certs/internal-ca.pem \
+  --mtls \
+  --client-cert /etc/chirpctl/certs/client.crt \
+  --client-key /etc/chirpctl/certs/client.key \
   get gateways
 ```
 
-To override the expected server identity:
+### mTLS and API tokens
 
-```bash
-chirpctl \
-  --server-name grpc.internal.example.com \
-  get gateways
-```
+mTLS and ChirpStack API-token authentication serve different purposes.
 
-These options override the corresponding connection settings for the invocation.
+- **mTLS** authenticates the client at the transport layer.
+- **API tokens** authenticate requests to ChirpStack.
 
-## Plaintext gRPC
+Depending on the deployment, both may be required.
 
-For a local test server that does not support TLS, chirpctl can use plaintext gRPC:
+:::note
 
-```yaml
-contexts:
-  local:
-    addr: localhost:8080
-    apiVersion: v4
-    insecure: true
-    token: ""
-    timeout: 10s
-```
+The server or reverse proxy must be configured to request or require client certificates.
 
-This disables transport encryption.
-
-You can also use the command-line flag:
-
-```bash
-chirpctl \
-  --addr localhost:8080 \
-  --insecure \
-  get gateways
-```
-
-:::warning
-
-Use plaintext gRPC only in an environment where the transport is appropriately isolated and trusted.
-
-For production, prefer TLS.
-
-If an API token is provided over plaintext gRPC, its confidentiality is not protected by TLS.
+Enabling mTLS in chirpctl does not make the server require client authentication.
 
 :::
 
-## TLS and reverse proxies
+## TLS configuration reference
 
-Many ChirpStack installations place a reverse proxy or ingress controller in front of the gRPC server.
+| YAML property | CLI flag | Description |
+| --- | --- | --- |
+| `insecure` | `--insecure` | Use plaintext gRPC |
+| `tlsSkipVerify` | `--tls-skip-verify` | Disable TLS server certificate verification |
+| `caCert` | `--cacert` | Additional trusted CA certificate bundle |
+| `serverName` | `--server-name` | Expected TLS server name |
+| `mTls.enabled` | `--mtls` | Enable mTLS client authentication |
+| `mTls.clientCert` | `--client-cert` | Client certificate path |
+| `mTls.clientKey` | `--client-key` | Client private key path |
 
-A typical architecture is:
+## Security recommendations
 
-```text
-chirpctl
-   |
-   | gRPC + TLS
-   v
-Reverse proxy / ingress
-   |
-   | Internal upstream connection
-   v
-ChirpStack gRPC API
-```
+For production deployments:
 
-The reverse proxy must support the gRPC protocol and HTTP/2 as required by the deployment.
+1. Prefer TLS with certificate verification.
+2. Use a trusted public CA or an explicitly configured private CA.
+3. Avoid `tlsSkipVerify` except for controlled diagnostic situations.
+4. Restrict access to private keys and API tokens.
+5. Use plaintext gRPC only when the complete network path is appropriately protected.
+6. Prefer TLS 1.2 or newer.
+7. Use mTLS when your infrastructure requires client-certificate authentication.
 
-TLS may terminate at the reverse proxy rather than inside ChirpStack.
-
-From chirpctl's perspective, the external endpoint must expose a compatible gRPC service.
-
-## TLS versus mTLS
-
-Standard TLS authenticates the server to the client and protects the connection.
-
-Mutual TLS (mTLS) additionally authenticates the client using a client certificate.
-
-chirpctl's configuration schema currently includes the following fields:
-
-```yaml
-mTls:
-  enabled: false
-  clientCert: ""
-  clientKey: ""
-```
-
-However, the current gRPC connection implementation does not load and attach the configured client certificate and private key.
-
-:::caution
-
-Do not rely on the `mTls` configuration for client-certificate authentication in the current release.
-
-The schema anticipates this capability, but it is not yet wired into the runtime transport.
-
-:::
-
-API-token authentication remains separate from TLS.
-
-## Troubleshooting TLS
+## Troubleshooting
 
 ### Certificate signed by unknown authority
 
-The server certificate cannot be validated against the trusted CA certificates.
+The server certificate cannot be validated against the trusted certificate authorities.
+
+Check the certificate chain and the configured `caCert` file.
+
+### Certificate hostname mismatch
+
+The server certificate does not match the configured TLS server name.
+
+Verify the hostname, `serverName`, and certificate Subject Alternative Name entries.
+
+### TLS handshake failure
 
 Check:
 
-- Whether the server presents the expected certificate chain
-- Whether the CA certificate is trusted by the operating system
-- Whether `caCert` points to the correct PEM file
-- Whether intermediate certificates are configured correctly
+- Whether the endpoint actually supports TLS.
+- Whether the expected gRPC port is used.
+- Whether the reverse proxy supports gRPC and HTTP/2.
+- Whether the appropriate certificates are configured.
 
-Do not solve this error by blindly enabling `--insecure`.
-
-### Certificate is not valid for the requested hostname
-
-The certificate identity does not match the configured TLS server name.
+### Failed mTLS authentication
 
 Verify:
 
-- The hostname in `addr`
-- The configured `serverName`
-- The certificate's Subject Alternative Name entries
-- Reverse-proxy certificate selection
+- The client certificate and private key match.
+- The certificate is valid and not expired.
+- The server trusts the client certificate issuer.
+- The reverse proxy or gRPC server is configured for mTLS.
 
-### TLS handshake failed
+### Plaintext connection rejected
 
-Possible causes include:
+Confirm whether the server expects TLS.
 
-- Connecting with TLS to a plaintext endpoint
-- Connecting without TLS to a TLS endpoint
-- An unsupported or misconfigured proxy
-- A certificate or protocol configuration problem
-
-### Deadline exceeded
-
-A timeout may indicate an unreachable server, blocked port, stalled TLS handshake, or slow gRPC operation.
-
-Check the server address and network path before increasing the timeout.
-
-## Recommended production configuration
-
-For a production ChirpStack instance:
-
-```yaml
-contexts:
-  production:
-    addr: grpc.example.com:443
-    apiVersion: v4
-    insecure: false
-    caCert: ""
-    serverName: grpc.example.com
-    token: ""
-    timeout: 15s
-```
-
-Supply the API token through a protected secret source.
-
-Use a custom `caCert` only when necessary for your certificate infrastructure.
+Do not enable plaintext mode against a TLS-only endpoint.
 
 ## Related documentation
 
