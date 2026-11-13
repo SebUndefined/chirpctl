@@ -1,9 +1,10 @@
-package application
+package tenant
 
 import (
 	"context"
 	"time"
 
+	apiv4 "github.com/chirpstack/chirpstack/api/go/v4/api"
 	"github.com/sebundefined/chirpctl/internal/service/shared"
 )
 
@@ -13,6 +14,11 @@ type Core interface {
 	Update(ctx context.Context, in UpdateParams) error
 	Delete(ctx context.Context, in DeleteParams) error
 	List(ctx context.Context, in ListParams) (shared.ListResult[ListItem], error)
+	AddUser(ctx context.Context, in AddUserParams) error
+	GetUser(ctx context.Context, in GetUserParams) (*apiv4.GetTenantUserResponse, error)
+	UpdateUser(ctx context.Context, in UpdateUserParams) error
+	DeleteUser(ctx context.Context, in DeleteUserParams) error
+	ListUsers(ctx context.Context, in ListUsersParams) (shared.ListResult[ListUserItem], error)
 }
 
 type Tenant struct {
@@ -64,3 +70,15 @@ type ListItem struct {
 	MaxGatewayCount     uint32     `json:"maxGatewayCount" yaml:"maxGatewayCount"`
 	MaxDeviceCount      uint32     `json:"maxDeviceCount" yaml:"maxDeviceCount"`
 }
+
+type AddUserParams struct{}
+
+type GetUserParams struct{}
+
+type UpdateUserParams struct{}
+
+type DeleteUserParams struct{}
+
+type ListUsersParams struct{}
+
+type ListUserItem struct{}
