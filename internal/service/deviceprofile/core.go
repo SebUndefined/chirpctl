@@ -9,7 +9,7 @@ import (
 
 type Core interface {
 	Create(ctx context.Context, in CreateDeviceProfileParams) (CreateDeviceProfileResult, error)
-	Get(ctx context.Context, in GetDeviceProfileParams) (*DeviceProfile, error)
+	Get(ctx context.Context, in GetParams) (*DeviceProfile, error)
 	Update(ctx context.Context, in UpdateDeviceProfileParams) error
 	Delete(ctx context.Context, in DeleteDeviceProfileParams) error
 	List(ctx context.Context, in ListParams) (shared.ListResult[ListItem], error)
@@ -24,7 +24,7 @@ type CreateDeviceProfileResult struct {
 	ID string `json:"id" yaml:"id"`
 }
 
-type GetDeviceProfileParams struct {
+type GetParams struct {
 	ID string
 }
 

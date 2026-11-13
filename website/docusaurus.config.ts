@@ -56,11 +56,21 @@ const config: Config = {
         theme: {
           customCss: './src/css/custom.css',
         },
+        gtag: {
+          trackingID: 'G-RGD22H3G1L',
+          anonymizeIP: true,
+        },
       } satisfies Preset.Options,
     ],
   ],
 
   themeConfig: {
+    metadata: [
+      {
+        name: 'google-site-verification',
+        content: '-k7HNCxVmEvc3TwNsK5ID2cUeNiTb7dkhjj5nJtVzZc',
+      },
+    ],
     colorMode: {
       defaultMode: 'dark',
       disableSwitch: true,

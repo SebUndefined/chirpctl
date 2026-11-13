@@ -7,6 +7,7 @@ import (
 	"github.com/sebundefined/chirpctl/internal/commands/cmdutils"
 	"github.com/sebundefined/chirpctl/internal/printing"
 	"github.com/sebundefined/chirpctl/internal/service/deviceprofile"
+	"github.com/sebundefined/chirpctl/internal/validation"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +36,25 @@ func NewGetCommand(a *app.App) *cobra.Command {
 }
 
 func getDeviceProfile(cmd *cobra.Command, a *app.App, s string) error {
-	return nil
+	if err := validation.ValidateUUID(s); err != nil {
+		return fmt.Errorf("invalid device profile ID: %w", err)
+	}
+	svc, err := a.Factory.DeviceProfile()
+	if err != nil {
+		return err
+	}
+	result, err := svc.Get(cmd.Context(), deviceprofile.GetParams{
+		ID: s,
+	})
+	if err != nil {
+		return err
+	}
+	if result == nil {
+		return fmt.Errorf("get gateway: empty response")
+	}
+
+	return a.Printer.Print(result, buildDeviceProfileDetailTable(result,
+		a.Printer.Format() == printing.FormatTableStyled, a.Printer.UseColor()))
 }
 
 func listDeviceProfiles(cmd *cobra.Command, a *app.App, params deviceprofile.ListParams) error {

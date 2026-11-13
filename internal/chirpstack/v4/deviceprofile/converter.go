@@ -66,7 +66,7 @@ func toDeviceProfile(src *api.DeviceProfile, createdAt, updatedAt *timestamppb.T
 		AbpRx2Dr:                         src.GetAbpRx2Dr(),
 		AbpRx2Freq:                       src.GetAbpRx2Freq(),
 		Tags:                             maps.Clone(src.GetTags()),
-		Measurements:                     nil,
+		Measurements:                     make(map[string]shared.Measurement),
 		AutoDetectMeasurements:           src.GetAutoDetectMeasurements(),
 		RegionConfigID:                   src.GetRegionConfigId(),
 		IsRelay:                          src.GetIsRelay(),

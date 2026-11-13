@@ -91,7 +91,7 @@ func (c *core) Create(ctx context.Context, in deviceprofile.CreateDeviceProfileP
 	}, nil
 }
 
-func (c *core) Get(ctx context.Context, in deviceprofile.GetDeviceProfileParams) (*deviceprofile.DeviceProfile, error) {
+func (c *core) Get(ctx context.Context, in deviceprofile.GetParams) (*deviceprofile.DeviceProfile, error) {
 	req := &apiv4.GetDeviceProfileRequest{
 		Id: in.ID,
 	}
