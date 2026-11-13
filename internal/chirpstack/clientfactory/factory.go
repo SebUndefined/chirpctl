@@ -11,9 +11,11 @@ import (
 	"time"
 
 	deviceV4 "github.com/sebundefined/chirpctl/internal/chirpstack/v4/device"
+	deviceprofileV4 "github.com/sebundefined/chirpctl/internal/chirpstack/v4/deviceprofile"
 	gatewayV4 "github.com/sebundefined/chirpctl/internal/chirpstack/v4/gateway"
 	"github.com/sebundefined/chirpctl/internal/config"
 	"github.com/sebundefined/chirpctl/internal/service/device"
+	"github.com/sebundefined/chirpctl/internal/service/deviceprofile"
 	"github.com/sebundefined/chirpctl/internal/service/gateway"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -23,6 +25,7 @@ import (
 type Factory interface {
 	Device() (device.API, error)
 	Gateway() (gateway.API, error)
+	DeviceProfile() (deviceprofile.API, error)
 	Reconfigure(apply func(*ResolveConfig)) error
 	GetCurrentConfig() (ResolveConfig, error)
 	Close() error
@@ -42,6 +45,7 @@ type factory struct {
 	conn                      *grpc.ClientConn
 	dev                       device.API
 	gw                        gateway.API
+	deviceProfile             deviceprofile.API
 }
 
 func NewFactory(cfg *ResolveConfig) (Factory, error) {
@@ -136,6 +140,25 @@ func (f *factory) Gateway() (gateway.API, error) {
 		return nil, err
 	}
 	return f.gw, nil
+}
+
+func (f *factory) DeviceProfile() (deviceprofile.API, error) {
+	if err := f.gwOnce.do(func() error {
+		switch f.cfg.Transport {
+		case "grpc":
+			conn, err := f.grpcConn()
+			if err != nil {
+				return err
+			}
+			f.deviceProfile = deviceprofileV4.NewAdapter(conn)
+		default:
+			return errors.New("transport non supporté pour Device Profile")
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return f.deviceProfile, nil
 }
 
 func (f *factory) grpcConn() (*grpc.ClientConn, error) {

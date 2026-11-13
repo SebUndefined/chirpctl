@@ -1,6 +1,9 @@
 package printing
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Row []any
 
@@ -15,4 +18,15 @@ func (r Row) toStrings() []string {
 type TableData struct {
 	Headers Row
 	Rows    []Row
+}
+
+// AppendSection adds a section heading to a detail table.
+func AppendSection(td *TableData, name string, styled, useColor bool) {
+	label := strings.ToUpper(strings.TrimSpace(name))
+
+	if styled && useColor {
+		label = StatusSymbol(label, ColorBlue)
+	}
+
+	td.Rows = append(td.Rows, Row{label, ""})
 }
