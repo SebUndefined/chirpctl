@@ -9,6 +9,7 @@ import (
 	"github.com/sebundefined/chirpctl/internal/service/device"
 	"github.com/sebundefined/chirpctl/internal/service/deviceprofile"
 	"github.com/sebundefined/chirpctl/internal/service/gateway"
+	"github.com/sebundefined/chirpctl/internal/service/tenant"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -357,6 +358,61 @@ func (_c *FactoryMock_Reconfigure_Call) Return(err error) *FactoryMock_Reconfigu
 }
 
 func (_c *FactoryMock_Reconfigure_Call) RunAndReturn(run func(apply func(*clientfactory.ResolveConfig)) error) *FactoryMock_Reconfigure_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Tenant provides a mock function for the type FactoryMock
+func (_mock *FactoryMock) Tenant() (tenant.API, error) {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Tenant")
+	}
+
+	var r0 tenant.API
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func() (tenant.API, error)); ok {
+		return returnFunc()
+	}
+	if returnFunc, ok := ret.Get(0).(func() tenant.API); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(tenant.API)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func() error); ok {
+		r1 = returnFunc()
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// FactoryMock_Tenant_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Tenant'
+type FactoryMock_Tenant_Call struct {
+	*mock.Call
+}
+
+// Tenant is a helper method to define mock.On call
+func (_e *FactoryMock_Expecter) Tenant() *FactoryMock_Tenant_Call {
+	return &FactoryMock_Tenant_Call{Call: _e.mock.On("Tenant")}
+}
+
+func (_c *FactoryMock_Tenant_Call) Run(run func()) *FactoryMock_Tenant_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *FactoryMock_Tenant_Call) Return(aPI tenant.API, err error) *FactoryMock_Tenant_Call {
+	_c.Call.Return(aPI, err)
+	return _c
+}
+
+func (_c *FactoryMock_Tenant_Call) RunAndReturn(run func() (tenant.API, error)) *FactoryMock_Tenant_Call {
 	_c.Call.Return(run)
 	return _c
 }
