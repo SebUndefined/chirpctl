@@ -1,17 +1,12 @@
-all: false
-dir: 'servicetest'
-filename: '{{.InterfaceName}}_mock.go'
-force-file-write: true
-formatter: goimports
-include-auto-generated: false
-log-level: info
-structname: '{{.Mock}}{{.InterfaceName}}'
-pkgname: '{{.SrcPackageName}}'
-recursive: false
-require-template-schema-exists: true
 template: testify
-template-schema: '{{.Template}}.schema.json'
+dir: "{{.InterfaceDir}}/mocks"
+pkgname: deviceprofilemocks
+filename: "mock_device_profile_{{.InterfaceName | snakecase}}.go"
+structname: "{{.InterfaceName}}Mock"
+force-file-write: true
+
 packages:
   github.com/sebundefined/chirpctl/internal/chirpstack/v4/deviceprofile:
-    config:
-      all: true
+    interfaces:
+      Client:
+
