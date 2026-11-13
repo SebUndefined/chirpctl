@@ -47,3 +47,37 @@ func toTenant(src *apiv4.Tenant, createdAt *timestamppb.Timestamp, updatedAt *ti
 	}
 	return result, nil
 }
+
+func toTenantUsersListItem(src *apiv4.TenantUserListItem) (tenant.ListUserItem, error) {
+	if src == nil {
+		return tenant.ListUserItem{}, errors.New("tenant list user item is nil")
+	}
+	return tenant.ListUserItem{
+		ID:             src.UserId,
+		CreatedAt:      shared.TsProtobufToPtrTime(src.GetCreatedAt()),
+		UpdatedAt:      shared.TsProtobufToPtrTime(src.GetUpdatedAt()),
+		Email:          src.Email,
+		IsAdmin:        src.IsAdmin,
+		IsGatewayAdmin: src.IsGatewayAdmin,
+		IsDeviceAdmin:  src.IsDeviceAdmin,
+	}, nil
+}
+
+func toTenantUser(src *apiv4.TenantUser, createdAt *timestamppb.Timestamp, updatedAt *timestamppb.Timestamp) (*tenant.User, error) {
+	if src == nil {
+		return nil, errors.New("tenant response is nil")
+	}
+	result := &tenant.User{
+		ID:             src.UserId,
+		CreatedAt:      shared.TsProtobufToPtrTime(createdAt),
+		UpdatedAt:      shared.TsProtobufToPtrTime(updatedAt),
+		TenantID:       src.TenantId,
+		IsAdmin:        src.IsAdmin,
+		IsDeviceAdmin:  src.IsDeviceAdmin,
+		IsGatewayAdmin: src.IsGatewayAdmin,
+		Email:          src.Email,
+		DeviceProfiles: nil,
+		Applications:   nil,
+	}
+	return result, nil
+}

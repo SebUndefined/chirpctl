@@ -68,3 +68,11 @@ func toLocation(src *common.Location) *shared.Location {
 		Accuracy:  src.Accuracy,
 	}
 }
+
+func toGatewayMetrics(src *api.GetGatewayMetricsResponse) (gateway.GetGatewayMetricsResult, error) {
+	if src == nil {
+		return gateway.GetGatewayMetricsResult{}, errors.New("gateway metrics response is empty")
+	}
+	result := gateway.GetGatewayMetricsResult{}
+	return result, nil
+}
