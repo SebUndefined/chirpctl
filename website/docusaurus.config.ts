@@ -60,6 +60,12 @@ const config: Config = {
           trackingID: 'G-RGD22H3G1L',
           anonymizeIP: true,
         },
+        sitemap: {
+          changefreq: 'weekly',
+          priority: 0.5,
+          ignorePatterns: ['/tags/**'], // Exclure certains chemins
+          filename: 'sitemap.xml',
+        },
       } satisfies Preset.Options,
     ],
   ],
