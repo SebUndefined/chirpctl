@@ -2,6 +2,8 @@ package printing
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 )
 
@@ -29,4 +31,19 @@ func AppendSection(td *TableData, name string, styled, useColor bool) {
 	}
 
 	td.Rows = append(td.Rows, Row{label, ""})
+}
+
+// AppendStringMapRows appends map entries in alphabetical order.
+func AppendStringMapRows(td *TableData, prefix string, values map[string]string) {
+	if len(values) == 0 {
+		td.Rows = append(td.Rows, Row{prefix, "-"})
+		return
+	}
+
+	for _, key := range slices.Sorted(maps.Keys(values)) {
+		td.Rows = append(td.Rows, Row{
+			prefix + "." + key,
+			values[key],
+		})
+	}
 }
