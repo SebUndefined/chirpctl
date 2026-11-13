@@ -7,6 +7,7 @@ package clientfactorymocks
 import (
 	"github.com/sebundefined/chirpctl/internal/chirpstack/clientfactory"
 	"github.com/sebundefined/chirpctl/internal/service/device"
+	"github.com/sebundefined/chirpctl/internal/service/deviceprofile"
 	"github.com/sebundefined/chirpctl/internal/service/gateway"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -142,6 +143,61 @@ func (_c *FactoryMock_Device_Call) Return(aPI device.API, err error) *FactoryMoc
 }
 
 func (_c *FactoryMock_Device_Call) RunAndReturn(run func() (device.API, error)) *FactoryMock_Device_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeviceProfile provides a mock function for the type FactoryMock
+func (_mock *FactoryMock) DeviceProfile() (deviceprofile.API, error) {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeviceProfile")
+	}
+
+	var r0 deviceprofile.API
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func() (deviceprofile.API, error)); ok {
+		return returnFunc()
+	}
+	if returnFunc, ok := ret.Get(0).(func() deviceprofile.API); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(deviceprofile.API)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func() error); ok {
+		r1 = returnFunc()
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// FactoryMock_DeviceProfile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeviceProfile'
+type FactoryMock_DeviceProfile_Call struct {
+	*mock.Call
+}
+
+// DeviceProfile is a helper method to define mock.On call
+func (_e *FactoryMock_Expecter) DeviceProfile() *FactoryMock_DeviceProfile_Call {
+	return &FactoryMock_DeviceProfile_Call{Call: _e.mock.On("DeviceProfile")}
+}
+
+func (_c *FactoryMock_DeviceProfile_Call) Run(run func()) *FactoryMock_DeviceProfile_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *FactoryMock_DeviceProfile_Call) Return(aPI deviceprofile.API, err error) *FactoryMock_DeviceProfile_Call {
+	_c.Call.Return(aPI, err)
+	return _c
+}
+
+func (_c *FactoryMock_DeviceProfile_Call) RunAndReturn(run func() (deviceprofile.API, error)) *FactoryMock_DeviceProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }
