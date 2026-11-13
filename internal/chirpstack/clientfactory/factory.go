@@ -13,16 +13,19 @@ import (
 	deviceV4 "github.com/sebundefined/chirpctl/internal/chirpstack/v4/device"
 	deviceprofileV4 "github.com/sebundefined/chirpctl/internal/chirpstack/v4/deviceprofile"
 	gatewayV4 "github.com/sebundefined/chirpctl/internal/chirpstack/v4/gateway"
+	tenantV4 "github.com/sebundefined/chirpctl/internal/chirpstack/v4/tenant"
 	"github.com/sebundefined/chirpctl/internal/config"
 	"github.com/sebundefined/chirpctl/internal/service/device"
 	"github.com/sebundefined/chirpctl/internal/service/deviceprofile"
 	"github.com/sebundefined/chirpctl/internal/service/gateway"
+	"github.com/sebundefined/chirpctl/internal/service/tenant"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Factory interface {
+	Tenant() (tenant.API, error)
 	Device() (device.API, error)
 	Gateway() (gateway.API, error)
 	DeviceProfile() (deviceprofile.API, error)
@@ -43,6 +46,7 @@ type factory struct {
 
 	connOnce, devOnce, gwOnce onceErr
 	conn                      *grpc.ClientConn
+	tenant                    tenant.API
 	dev                       device.API
 	gw                        gateway.API
 	deviceProfile             deviceprofile.API
@@ -102,6 +106,25 @@ func (f *factory) Reconfigure(apply func(*ResolveConfig)) error {
 	f.gwOnce.reset()
 	f.conn, f.dev, f.gw = nil, nil, nil
 	return nil
+}
+
+func (f *factory) Tenant() (tenant.API, error) {
+	if err := f.gwOnce.do(func() error {
+		switch f.cfg.Transport {
+		case "grpc":
+			conn, err := f.grpcConn()
+			if err != nil {
+				return err
+			}
+			f.tenant = tenantV4.NewAdapter(conn)
+		default:
+			return errors.New("transport non supporté pour tenant")
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return f.tenant, nil
 }
 
 func (f *factory) Device() (device.API, error) {
