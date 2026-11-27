@@ -1,0 +1,13 @@
+FROM debian:trixie-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG TARGETPLATFORM
+COPY ${TARGETPLATFORM}/chirpctl /usr/local/bin/chirpctl
+
+ENV HOME=/tmp
+USER 65532:65532
+
+ENTRYPOINT ["/usr/local/bin/chirpctl"]
