@@ -19,14 +19,13 @@ type Client interface {
 
 type grpcUserAPI struct{ c apiv4.UserServiceClient }
 
-func (g *grpcUserAPI) Create(ctx context.Context, in *apiv4.CreateUserRequest, opts ...grpc.CallOption) (*apiv4.CreateUserResponse, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 var _ Client = (*grpcUserAPI)(nil)
 
 func NewWithClient(c apiv4.UserServiceClient) Client { return &grpcUserAPI{c: c} }
+
+func (g *grpcUserAPI) Create(ctx context.Context, in *apiv4.CreateUserRequest, opts ...grpc.CallOption) (*apiv4.CreateUserResponse, error) {
+	return g.c.Create(ctx, in, opts...)
+}
 
 func (g *grpcUserAPI) Get(ctx context.Context, in *apiv4.GetUserRequest, opts ...grpc.CallOption) (*apiv4.GetUserResponse, error) {
 	return g.c.Get(ctx, in, opts...)

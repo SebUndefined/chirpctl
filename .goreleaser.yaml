@@ -56,3 +56,25 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+dockers_v2:
+  - id: alpine
+    dockerfile: docker/Dockerfile.alpine
+    images: ["sebundefined/chirpctl"]
+    tags:
+      - "{{ .Tag }}"
+      - "{{ .Tag }}-alpine"
+      - "latest"
+      - "latest-alpine"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+
+  - id: debian
+    dockerfile: docker/Dockerfile.debian
+    images: ["sebundefined/chirpctl"]
+    tags:
+      - "{{ .Tag }}-debian"
+      - "latest-debian"
+    platforms:
+      - linux/amd64
+      - linux/arm64
