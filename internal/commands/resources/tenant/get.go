@@ -5,6 +5,7 @@ import (
 
 	"github.com/sebundefined/chirpctl/internal/app"
 	"github.com/sebundefined/chirpctl/internal/commands/cmdutils"
+	"github.com/sebundefined/chirpctl/internal/commands/resources/tenant/user"
 	"github.com/sebundefined/chirpctl/internal/printing"
 	"github.com/sebundefined/chirpctl/internal/service/tenant"
 	"github.com/sebundefined/chirpctl/internal/validation"
@@ -28,6 +29,7 @@ func NewGetCommand(a *app.App) *cobra.Command {
 	}
 	cmdutils.AttachPaginationFlags(cmd, &params.ListPaginationRequest)
 	cmdutils.AttachOrderByFlags(cmd, &params.ListOrderByRequest)
+	cmd.AddCommand(user.NewGetCommand(a))
 	return cmd
 }
 
