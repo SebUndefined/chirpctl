@@ -10,6 +10,7 @@ import (
 	"github.com/sebundefined/chirpctl/internal/service/deviceprofile"
 	"github.com/sebundefined/chirpctl/internal/service/gateway"
 	"github.com/sebundefined/chirpctl/internal/service/tenant"
+	"github.com/sebundefined/chirpctl/internal/service/user"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -413,6 +414,61 @@ func (_c *FactoryMock_Tenant_Call) Return(aPI tenant.API, err error) *FactoryMoc
 }
 
 func (_c *FactoryMock_Tenant_Call) RunAndReturn(run func() (tenant.API, error)) *FactoryMock_Tenant_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// User provides a mock function for the type FactoryMock
+func (_mock *FactoryMock) User() (user.API, error) {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for User")
+	}
+
+	var r0 user.API
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func() (user.API, error)); ok {
+		return returnFunc()
+	}
+	if returnFunc, ok := ret.Get(0).(func() user.API); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(user.API)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func() error); ok {
+		r1 = returnFunc()
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// FactoryMock_User_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'User'
+type FactoryMock_User_Call struct {
+	*mock.Call
+}
+
+// User is a helper method to define mock.On call
+func (_e *FactoryMock_Expecter) User() *FactoryMock_User_Call {
+	return &FactoryMock_User_Call{Call: _e.mock.On("User")}
+}
+
+func (_c *FactoryMock_User_Call) Run(run func()) *FactoryMock_User_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *FactoryMock_User_Call) Return(aPI user.API, err error) *FactoryMock_User_Call {
+	_c.Call.Return(aPI, err)
+	return _c
+}
+
+func (_c *FactoryMock_User_Call) RunAndReturn(run func() (user.API, error)) *FactoryMock_User_Call {
 	_c.Call.Return(run)
 	return _c
 }

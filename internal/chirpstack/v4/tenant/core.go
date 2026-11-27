@@ -71,13 +71,31 @@ func (c *core) List(ctx context.Context, in tenant.ListParams) (shared.ListResul
 }
 
 func (c *core) AddUser(ctx context.Context, in tenant.AddUserParams) error {
-	//TODO implement me
+	/*req := &apiv4.AddTenantUserRequest{
+		TenantUser: &apiv4.TenantUser{
+			TenantId:       "",
+			UserId:         "",
+			IsAdmin:        false,
+			IsDeviceAdmin:  false,
+			IsGatewayAdmin: false,
+			Email:          "",
+			DeviceProfiles: nil,
+			Applications:   nil,
+		}}
+	c.client.AddUser()*/
 	panic("implement me")
 }
 
-func (c *core) GetUser(ctx context.Context, in tenant.GetUserParams) (*apiv4.GetTenantUserResponse, error) {
-	//TODO implement me
-	panic("implement me")
+func (c *core) GetUser(ctx context.Context, in tenant.GetUserParams) (*tenant.User, error) {
+	req := &apiv4.GetTenantUserRequest{
+		UserId:   in.ID,
+		TenantId: in.TenantID,
+	}
+	getUser, err := c.client.GetUser(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("getting users tenant: %w", err)
+	}
+	return toTenantUser(getUser.TenantUser, getUser.CreatedAt, getUser.UpdatedAt)
 }
 
 func (c *core) UpdateUser(ctx context.Context, in tenant.UpdateUserParams) error {
@@ -91,6 +109,25 @@ func (c *core) DeleteUser(ctx context.Context, in tenant.DeleteUserParams) error
 }
 
 func (c *core) ListUsers(ctx context.Context, in tenant.ListUsersParams) (shared.ListResult[tenant.ListUserItem], error) {
-	//TODO implement me
-	panic("implement me")
+	req := &apiv4.ListTenantUsersRequest{
+		Limit:    in.GetSafeLimit(),
+		Offset:   in.Offset,
+		TenantId: in.TenantID,
+	}
+	out := shared.NewListResult[tenant.ListUserItem]()
+	resp, err := c.client.ListUsers(ctx, req)
+	if err != nil {
+		return out, err
+	}
+	items := resp.GetResult()
+	out = shared.NewListResultCap[tenant.ListUserItem](len(items))
+	out.TotalCount = resp.GetTotalCount()
+	for _, item := range items {
+		converted, err := toTenantUsersListItem(item)
+		if err != nil {
+			return out, fmt.Errorf("convert tenant user list item: %w", err)
+		}
+		out.Add(converted)
+	}
+	return out, nil
 }

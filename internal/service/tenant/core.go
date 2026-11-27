@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	apiv4 "github.com/chirpstack/chirpstack/api/go/v4/api"
 	"github.com/sebundefined/chirpctl/internal/service/shared"
 )
 
@@ -15,7 +14,7 @@ type Core interface {
 	Delete(ctx context.Context, in DeleteParams) error
 	List(ctx context.Context, in ListParams) (shared.ListResult[ListItem], error)
 	AddUser(ctx context.Context, in AddUserParams) error
-	GetUser(ctx context.Context, in GetUserParams) (*apiv4.GetTenantUserResponse, error)
+	GetUser(ctx context.Context, in GetUserParams) (*User, error)
 	UpdateUser(ctx context.Context, in UpdateUserParams) error
 	DeleteUser(ctx context.Context, in DeleteUserParams) error
 	ListUsers(ctx context.Context, in ListUsersParams) (shared.ListResult[ListUserItem], error)
@@ -73,12 +72,48 @@ type ListItem struct {
 
 type AddUserParams struct{}
 
-type GetUserParams struct{}
+type GetUserParams struct {
+	ID       string
+	TenantID string
+}
+
+type User struct {
+	ID             string               `json:"id" yaml:"id"`
+	CreatedAt      *time.Time           `json:"createdAt" yaml:"createdAt"`
+	UpdatedAt      *time.Time           `json:"updatedAt" yaml:"updatedAt"`
+	TenantID       string               `json:"tenantID" yaml:"tenantID"`
+	IsAdmin        bool                 `json:"isAdmin" yaml:"isAdmin"`
+	IsDeviceAdmin  bool                 `json:"isDeviceAdmin" yaml:"isDeviceAdmin"`
+	IsGatewayAdmin bool                 `json:"isGatewayAdmin" yaml:"isGatewayAdmin"`
+	Email          string               `json:"email" yaml:"email"`
+	DeviceProfiles []*UserDeviceProfile `json:"deviceProfiles" yaml:"deviceProfiles"`
+	Applications   []*UserApplication   `json:"applications" yaml:"applications"`
+}
+
+type UserApplication struct {
+	ApplicationID string `json:"applicationID" yaml:"applicationID"`
+	IsReadOnly    bool   `json:"isReadOnly" yaml:"isReadOnly"`
+}
+
+type UserDeviceProfile struct {
+	DeviceProfileID string `json:"deviceProfileID" yaml:"deviceProfileID"`
+}
 
 type UpdateUserParams struct{}
 
 type DeleteUserParams struct{}
 
-type ListUsersParams struct{}
+type ListUsersParams struct {
+	shared.ListPaginationRequest
+	TenantID string
+}
 
-type ListUserItem struct{}
+type ListUserItem struct {
+	ID             string     `json:"id" yaml:"id"`
+	CreatedAt      *time.Time `json:"createdAt" yaml:"createdAt"`
+	UpdatedAt      *time.Time `json:"updatedAt" yaml:"updatedAt"`
+	Email          string     `json:"email" yaml:"email"`
+	IsAdmin        bool       `json:"isAdmin" yaml:"isAdmin"`
+	IsGatewayAdmin bool       `json:"isGatewayAdmin" yaml:"isGatewayAdmin"`
+	IsDeviceAdmin  bool       `json:"isDeviceAdmin" yaml:"isDeviceAdmin"`
+}
