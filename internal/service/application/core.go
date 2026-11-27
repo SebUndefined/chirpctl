@@ -8,32 +8,36 @@ import (
 )
 
 type Core interface {
-	Create(ctx context.Context, in CreateApplicationParams) (CreateApplicationResult, error)
-	Get(ctx context.Context, in GetApplicationParams) (Application, error)
+	Create(ctx context.Context, in CreateParams) (CreateResult, error)
+	Get(ctx context.Context, in GetParams) (Application, error)
 	Update(ctx context.Context, in UpdateApplicationParams) error
 	Delete(ctx context.Context, in DeleteApplicationParams) error
-	List(ctx context.Context, in ListApplicationsParams) (shared.ListResult[Application], error)
+	List(ctx context.Context, in ListParams) (shared.ListResult[Application], error)
 }
 
 type Application struct {
-	ID          string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID              string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	Name            string
+	Description     string
+	TenantID        string
+	Tags            map[string]string
+	MeasurementKeys []string
+}
+
+type CreateParams struct {
 	Name        string
 	Description string
 	TenantID    string
 	Tags        map[string]string
 }
 
-type CreateApplicationParams struct {
-	Application Application
-}
-
-type CreateApplicationResult struct {
+type CreateResult struct {
 	ID string
 }
 
-type GetApplicationParams struct {
+type GetParams struct {
 	ID string
 }
 
@@ -48,4 +52,17 @@ type DeleteApplicationParams struct {
 	ID string
 }
 
-type ListApplicationsParams struct{}
+type ListParams struct {
+	shared.ListPaginationRequest
+	shared.ListOrderByRequest
+	shared.ListTagsFilterRequest
+	TenantID string
+}
+
+type ListItem struct {
+	ID          string
+	CreatedAt   *time.Time
+	UpdatedAt   *time.Time
+	Name        string
+	Description string
+}
